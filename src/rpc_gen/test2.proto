@@ -1,0 +1,25 @@
+package test2;
+
+// option cc_generic_services=true;
+
+message A {
+}
+
+message SearchRequest {
+    required string name = 1;
+    required A      a = 2;
+    required int32  num = 3;
+    repeated int32 nums = 4;
+    repeated string strs = 5;
+}
+message SearchResponse {
+    required string reply = 1;
+    required A      a = 2;
+    required int32  num = 3;
+    repeated int32 nums = 4;
+    repeated string strs = 5;
+}
+
+service Search {
+    rpc search(SearchRequest) returns (SearchResponse);
+}

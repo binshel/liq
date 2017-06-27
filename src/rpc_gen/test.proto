@@ -1,0 +1,50 @@
+
+package test;
+
+// option cc_generic_services=true;
+
+enum ENUM {
+    COMMON_NO_RSP                   = -2;       // 后台不返回,
+    COMMON_ERROR                    = -1;       // 通用操作错误码
+}
+
+message A {
+    required int32 i32 = 1;
+    required int32 i64 = 2;
+    required uint32 ui32 = 3;
+    required uint32 ui64 = 4;
+    required double dd = 5;
+    required float ff = 6;
+    required bool bb = 7;
+    required ENUM ee = 8;
+    required string str = 9;
+}
+
+message SearchRequest {
+    required string name = 1;
+    required A      a = 2;
+    required int32  num = 3;
+    repeated int32 nums = 4;
+    repeated string strs = 5;
+
+    required int32 i32 = 101;
+    required int64 i64 = 102;
+    required uint32 ui32 = 103;
+    required uint64 ui64 = 104;
+    required double dd = 105;
+    required float ff = 106;
+    required bool bb = 107;
+    required ENUM ee = 108;
+    required string str = 109;
+}
+message SearchResponse {
+    required string reply = 1;
+    required A      a = 2;
+    required int32  num = 3;
+    repeated int32 nums = 4;
+    repeated string strs = 5;
+}
+
+service Search {
+    rpc search(SearchRequest) returns (SearchResponse);
+}
