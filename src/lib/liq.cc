@@ -18,8 +18,9 @@
  */
 #include <iostream>
 #include <string>
-#include <libconfig.h++>
+#include <fstream>
 
+#include "liq.h"
 #include "rpc.h"
 #include "service.h"
 
@@ -41,9 +42,11 @@ int main(int argc, const char *argv[])
 
 extern "C" {
     void liq_init(const char *cfgfile) {
-        libconfig::Config cfg;
-        cfg.readFile(cfgfile);
+        DynamicJsonBuffer json_buff(512);       
+        ifsteam ifs;
+        ifs.open(cfgfile);
+        JsonObject &root = son_buff.parse(ifs);
 
-        ServiceManager::LoadCfg(cfg);
+        ServiceManager::LoadCfg(root);
     }
 }

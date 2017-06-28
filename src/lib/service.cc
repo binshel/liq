@@ -10,9 +10,9 @@ namespace liq {
     std::map<std::string, CommonSkeleton*> ServiceManager::skeletons;
 
 
-    void ServiceManager::LoadCfg(libconfig::Config &cfg) {
-        libconfig::Setting &service_root = cfg.getRoot()["services"];
-        libconfig::Setting &stub_root = cfg.getRoot()["services"];
+    void ServiceManager::LoadCfg(JsonObject &cfg) {
+        libconfig::Setting &service_root = cfg["services"];
+        libconfig::Setting &stub_root = cfg["stubs"];
 
         // 创建桩
         for (int i = 0; i < stub_root.getLength(); ++i) {
@@ -27,9 +27,9 @@ namespace liq {
             // create stub
             snprintf(name_buf, MAX_NAME_LEN, "%s.stub.so", stub_cfg["module"]);
             Module *module = ModuleManager::Load(name_buf);
-            CommonService *stub = module->create_stub(stub_cfg["name"]);
-
+            CommonService *stub = module->create_module();
             this->services[stub_cfg["name"]] = stub;
+            // stub->onload(stub_cfg);
         }
 
         // 创建服务和skeleton
@@ -44,19 +44,23 @@ namespace liq {
 
             // create service
             Module *module = ModuleManager::Load(service_cfg["module"]);
-            CommonService *service = module->create_service(service_cfg["name"]);
+            CommonService *service = module->create_module();
+            this->services[service_cfg["name"]] = service;
+            service->onload(service_cfg);
 
             // create skeleton
             snprintf(name_buf, MAX_NAME_LEN, "%s.skeleton.so", service_cfg["module"]);
             Module *module = ModuleManager::Load(name_buf);
-            CommonStub *stub = module->createSkeleton(service);
-
-            this->services[service_cfg["name"]] = service;
-
-            service->OnLoad(service_cfg);
+            CommonSkeleton *skeleton = module->create_module();
+            this->skeletons[name_buf] = skeleton;
+            skeleton->set_backend(service);
         }
 
         // 设置依赖
+        for (int i = 0; i < service_root.getLength(); ++i) {
+            auto service_cfg = service_root[i];
+            auto dep_cfg = service_cfg["dep"];
+        }
     }
 
 }

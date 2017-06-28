@@ -4,8 +4,6 @@
 #include <map>
 #include <memory>
 
-#include <libconfig.h++>
-
 #include "module.h"
 
 namespace liq {
@@ -17,10 +15,10 @@ namespace liq {
         static std::map<std::string, CommonSkeleton*> skeletons;
 
     public:
-        static void LoadCfg(libconfig::Config &cfg);
+        static void LoadCfg(JsonObject &cfg);
     };
 
-    typedef CommonService* (*fcnCreateService)(std::string &name);
-    typedef CommonStub* (*fcnCreateStub)(std::string &name);
+    typedef void* (*fcn_create_module)(std::string &name);
+    typedef void* (*fcnCreateStub)(std::string &name);
     typedef CommonSkeleton* (*fcnCreateSkeleton)(CommonService *service);
 }
