@@ -111,7 +111,7 @@ void generate_header(const google::protobuf::FileDescriptor* file,
     printer.Print("#define $H$_H_\n\n", "H", fileNameUp);
 
     // include
-    printer.Print("#include \"dsf/base.h\"\n");
+    printer.Print("#include \"liq.h\"\n");
     printer.Print("#include \"./$h$.pb.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
@@ -191,7 +191,7 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
 
 {
     // include
-    printer.Print("#include \"dsf/base.h\"\n");
+    printer.Print("#include \"liq.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
@@ -325,7 +325,7 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
 {
 
     // include
-    printer.Print("#include \"dsf/base.h\"\n");
+    printer.Print("#include \"liq.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace

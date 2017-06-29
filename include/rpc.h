@@ -1,9 +1,9 @@
-#pragma once;
+#pragma once
 
 
 namespace liq {
 
-    class RPC : public {
+    class RPC {
         public:
             virtual uint8_t* getBuff(int32_t len) {
                 return new uint8_t[len];
@@ -18,7 +18,7 @@ namespace liq {
     class RPCManager {
         public:
             static RPC* createRPC(std::string &from, std::string &to) {
-                return new RPCBase();
+                return new RPC();
             }
 
     };

@@ -42,11 +42,11 @@ int main(int argc, const char *argv[])
 
 extern "C" {
     void liq_init(const char *cfgfile) {
-        DynamicJsonBuffer json_buff(512);       
-        ifsteam ifs;
+        ArduinoJson::DynamicJsonBuffer json_buff(512);       
+        std::ifstream ifs;
         ifs.open(cfgfile);
-        JsonObject &root = son_buff.parse(ifs);
+        ArduinoJson::JsonObject &root = json_buff.parse(ifs);
 
-        ServiceManager::LoadCfg(root);
+        ServiceManager::load_cfg(root);
     }
 }

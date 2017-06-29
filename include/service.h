@@ -15,10 +15,6 @@ namespace liq {
         static std::map<std::string, CommonSkeleton*> skeletons;
 
     public:
-        static void LoadCfg(JsonObject &cfg);
+        static void load_cfg(ArduinoJson::JsonObject &cfg);
     };
-
-    typedef void* (*fcn_create_module)(std::string &name);
-    typedef void* (*fcnCreateStub)(std::string &name);
-    typedef CommonSkeleton* (*fcnCreateSkeleton)(CommonService *service);
 }
