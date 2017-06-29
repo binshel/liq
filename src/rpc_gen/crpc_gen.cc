@@ -111,11 +111,13 @@ void generate_header(const google::protobuf::FileDescriptor* file,
     printer.Print("#define $H$_H_\n\n", "H", fileNameUp);
 
     // include
+    printer.Print("#include <google/protobuf/io/coded_stream.h>\n");
     printer.Print("#include \"liq.h\"\n");
     printer.Print("#include \"./$h$.pb.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
-    printer.Print("using namespace std;\n\n");
+    printer.Print("using namespace std;\n");
+    printer.Print("using namespace liq;\n\n");
 
     // namespace
     if (file->package().length() > 0) {
@@ -195,7 +197,8 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
-    printer.Print("using namespace std;\n\n");
+    printer.Print("using namespace std;\n");
+    printer.Print("using namespace liq;\n\n");
 
     // namespace
     if (file->package().length() > 0) {
@@ -205,14 +208,16 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
 
     // class header
     const google::protobuf::ServiceDescriptor *service = file->service(0);
-    printer.Print("class $s$Stub: public CommonStub, public $s$Service {\n", "s", service->name());
+    printer.Print("class $s$Stub: public $s$Service {\n", "s", service->name());
     printer.Print("public:\n");
     printer.Indent();
 
     // 构造函数
+    /*
     printer.Print("$s$Stub(std::string &name) {\n"
             "  this->name = name;\n"
             "}\n\n", "s", service->name());
+    */
 
     // class method
     for (int i = 0; i < service->method_count(); ++i) {
@@ -225,7 +230,7 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
                 "virtual $out$ *$method$($input$ *req) {\n"
                 "  // 调用\n"
                 "  int reqLen = req->ByteSize();\n"
-                "  uint8_t *reqBuff = getMsgBuff(reqLen);\n"
+                "  uint8_t *reqBuff = (uint8_t*)malloc(reqLen);\n"
                 "  uint8_t *resBuff = NULL;\n"
                 "  int resLen = 0;\n"
                 "\n"
@@ -236,7 +241,7 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
                 "    req->SerializeWithCachedSizesToArray(reqBuff);\n"
                 "  }\n"
                 "  rpc(\"$method$\", reqBuff, reqLen, &resBuff, &resLen);\n"
-                "  releaseMsgBuff(reqBuff, reqLen);\n"
+                "  free(reqBuff);\n"
                 "\n"
                 "  // 获得结果\n"
                 "  if (resLen > 0) {\n"
@@ -307,8 +312,8 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
     // extern method
     printer.Print(
             "extern \"C\" {\n"
-            "  CommonStub *createStub(std::string &name) {\n"
-            "    $s$Stub *stub = new $s$Stub(name);\n"
+            "  CommonService* create_module() {\n"
+            "    $s$Stub *stub = new $s$Stub();\n"
             "    return stub;\n"
             "  }\n"
             "}\n", "s", service->name());
@@ -325,11 +330,13 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
 {
 
     // include
+    printer.Print("#include <google/protobuf/io/coded_stream.h>\n");
     printer.Print("#include \"liq.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
-    printer.Print("using namespace std;\n\n");
+    printer.Print("using namespace std;\n");
+    printer.Print("using namespace liq;\n\n");
 
     // namespace
     if (file->package().length() > 0) {
@@ -348,13 +355,18 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
     printer.Indent();
 
     // 构造函数
+    /*
     printer.Print("$s$Skeleton(CommonService *service) {\n"
             "  this->service = ($s$Service*)service;\n"
             "}\n\n", "s", service->name());
+    */
 
+    // set_backend
+    printer.Print("virtual void set_backend(CommonService *service) {\n"
+            "  this->service = ($s$Service*)service;\n"
+            "}\n\n", "s", service->name());
     // handle
-    printer.Print("virtual int handle(const char *method, uint8_t *reqBuff, int reqLen,"
-                "uint8_t **resBuff, int *resLen) {\n");
+    printer.Print("virtual google::protobuf::Message* handle(const char *method, uint8_t *reqBuff, int reqLen) {\n");
     printer.Indent();
     for (int i = 0; i < service->method_count(); ++i) {
         const google::protobuf::MethodDescriptor *method = service->method(i);
@@ -366,12 +378,12 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
         } else {
             printer.Print("} else if (strcmp(method, \"$method$\") == 0) {\n", "method", method->name());
         }
-        printer.Print("  return $method$(reqBuff, reqLen, resBuff, resLen);\n", "method", method->name());
+        printer.Print("  return $method$(reqBuff, reqLen);\n", "method", method->name());
     }
     if (service->method_count() > 0) {
         printer.Print(
                 "} else {\n"
-                "  return -2;\n"
+                "  return NULL;\n"
                 "}\n");
     }
     printer.Outdent();
@@ -384,8 +396,7 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
         const google::protobuf::Descriptor *inputType = method->input_type();
 
         printer.Print(
-                "virtual int $method$(uint8_t *reqBuff, int reqLen,\n"
-                "     uint8_t **resBuff, int *resLen) {\n"
+                "virtual google::protobuf::Message* $method$(uint8_t *reqBuff, int reqLen) {\n"
                 "  // 生成请求\n"
                 "  google::protobuf::io::CodedInputStream reqStream(reqBuff, reqLen);\n"
                 "  $input$ *req = new $input$();\n"
@@ -394,19 +405,7 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
                 "  // 调用\n"
                 "  $out$ *res = service->$method$(req);\n"
                 "  delete req;\n"
-                "\n"
-                "  // 打包结果\n"
-                "  if (res) {\n"
-                "    *resLen = res->ByteSize();\n"
-                "    *resBuff = getMsgBuff(*resLen);\n"
-                "    if (!(*resBuff)) {\n"
-                "      return -1;\n"
-                "    }\n"
-                "    res->SerializeWithCachedSizesToArray(*resBuff);\n"
-                "  } else {\n"
-                "    *resLen = 0;\n"
-                "  }\n"
-                "  return 0;\n"
+                "  return res;\n"
                 "}\n",
             "out", outputType->name(), 
             "method", method->name(),
@@ -419,8 +418,8 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
     // extern method
     printer.Print(
             "extern \"C\" {\n"
-            "  CommonSkeleton *createSkeleton(CommonService *service) {\n"
-            "    $s$Skeleton *skeleton = new $s$Skeleton(service);\n"
+            "  CommonSkeleton *create_module() {\n"
+            "    $s$Skeleton *skeleton = new $s$Skeleton();\n"
             "    return skeleton;\n"
             "  }\n"
             "}\n", "s", service->name());
