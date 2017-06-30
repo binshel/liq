@@ -43,7 +43,7 @@ Module* ModuleManager::LoadFile(const std::string &path)
     Module *module = new Module();
     void *handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
-        std::cout << "load file error" << path << dlerror() << std::endl;
+        std::cout << "load file error:" << path << dlerror() << std::endl;
         return NULL;
     }
     module->file_path = path;
