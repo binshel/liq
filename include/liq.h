@@ -5,7 +5,6 @@
 #include <string>
 #include <map>
 
-#include <google/protobuf/message.h>
 #include <arduino_json/arduino_json.hpp>
 
 namespace liq {
@@ -20,12 +19,6 @@ namespace liq {
             virtual int oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
                 return 0;
             }
-    };
-
-    class CommonSkeleton : public CommonService {
-        public:
-            virtual void set_backend(CommonService *service) = 0;
-            virtual google::protobuf::Message* handle(const char *method, uint8_t *reqBuff, int reqLen) = 0;
     };
 
 }

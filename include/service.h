@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "module.h"
+#include "rpc.h"
 
 namespace liq {
 

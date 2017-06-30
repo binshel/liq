@@ -2,6 +2,7 @@
 #include <string>
 
 #include "service.h"
+#include "rpc.h"
 
 
 namespace liq {
@@ -28,8 +29,10 @@ namespace liq {
             // create stub
             snprintf(name_buf, MAX_NAME_LEN, "%s.stub.so", stub_cfg["module"]);
             module = ModuleManager::Load(name_buf);
-            CommonService *stub = module->create_service();
-            services[name] = stub;
+            CommonService *service = module->create_service();
+            CommonStub *stub = (CommonStub*)service;
+            stub->set_rpc(RPCManager::create_rpc("self", (const char *)stub_cfg["remote"]));
+            services[name] = service;
             // stub->onload(stub_cfg);
         }
 

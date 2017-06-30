@@ -33,6 +33,7 @@ foreach(source ${sources})
         COMMAND mkdir -p ${pb_dir}
         COMMAND protoc --cpp_out=${pb_dir} -I${CMAKE_CURRENT_SOURCE_DIR}/test ${source}
         COMMAND protoc --plugin=protoc-gen-crpc=${CMAKE_CURRENT_BINARY_DIR}/rpc_gen --crpc_out=${pb_dir} -I${CMAKE_CURRENT_SOURCE_DIR}/test ${source}
+        DEPENDS rpc_gen ${source}
         )
     add_library(${service}.pb SHARED ${pb_dir}/${service}.pb.cc)
     add_library(${service}.stub SHARED ${pb_dir}/${service}.stub.cc)

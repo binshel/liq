@@ -113,6 +113,7 @@ void generate_header(const google::protobuf::FileDescriptor* file,
     // include
     printer.Print("#include <google/protobuf/io/coded_stream.h>\n");
     printer.Print("#include \"liq.h\"\n");
+    printer.Print("#include \"rpc.h\"\n");
     printer.Print("#include \"./$h$.pb.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
@@ -127,7 +128,7 @@ void generate_header(const google::protobuf::FileDescriptor* file,
 
     // class header
     const google::protobuf::ServiceDescriptor *service = file->service(0);
-    printer.Print("class $s$Service: public CommonService {\n", "s", service->name());
+    printer.Print("class $s$Service: public CommonStub {\n", "s", service->name());
     printer.Print("public:\n");
     printer.Indent();
 
@@ -194,6 +195,7 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
 {
     // include
     printer.Print("#include \"liq.h\"\n");
+    printer.Print("#include \"rpc.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
@@ -229,8 +231,8 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
         printer.Print(
                 "virtual $out$ *$method$($input$ *req) {\n"
                 "  // 调用\n"
-                "  int reqLen = req->ByteSize();\n"
-                "  uint8_t *reqBuff = (uint8_t*)malloc(reqLen);\n"
+                "  int32_t reqLen = req->ByteSize();\n"
+                "  uint8_t *reqBuff = this->rpc->alloc(reqLen);\n"
                 "  uint8_t *resBuff = NULL;\n"
                 "  int resLen = 0;\n"
                 "\n"
@@ -240,8 +242,8 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
                 "  } else {\n"
                 "    req->SerializeWithCachedSizesToArray(reqBuff);\n"
                 "  }\n"
-                "  rpc(\"$method$\", reqBuff, reqLen, &resBuff, &resLen);\n"
-                "  free(reqBuff);\n"
+                "  rpc->call(\"$method$\", reqBuff, reqLen, &resBuff, &resLen);\n"
+                "  this->rpc->free(reqBuff);\n"
                 "\n"
                 "  // 获得结果\n"
                 "  if (resLen > 0) {\n"
@@ -332,6 +334,7 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
     // include
     printer.Print("#include <google/protobuf/io/coded_stream.h>\n");
     printer.Print("#include \"liq.h\"\n");
+    printer.Print("#include \"rpc.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
