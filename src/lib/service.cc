@@ -11,7 +11,7 @@ namespace liq {
     std::map<std::string, CommonSkeleton*> ServiceManager::skeletons;
 
 
-    void ServiceManager::load_cfg(ArduinoJson::JsonObject &cfg) {
+    void ServiceManager::load_cfg(LiqState *liq, ArduinoJson::JsonObject &cfg) {
         ArduinoJson::JsonObject &service_root = cfg["services"];
         ArduinoJson::JsonObject &stub_root = cfg["stubs"];
 
@@ -33,7 +33,6 @@ namespace liq {
             CommonStub *stub = (CommonStub*)service;
             stub->set_rpc(RPCManager::create_rpc("self", (const char *)stub_cfg["remote"]));
             services[name] = service;
-            // stub->onload(stub_cfg);
         }
 
         // 创建服务和skeleton
@@ -52,7 +51,7 @@ namespace liq {
             module = ModuleManager::Load(name_buf);
             CommonService *service = module->create_service();
             services[name] = service;
-            service->onload(service_cfg);
+            service->onload(liq, service_cfg);
 
             // create skeleton
             snprintf(name_buf, MAX_NAME_LEN, "lib%s.skeleton.so", (const char*)service_cfg["module"]);

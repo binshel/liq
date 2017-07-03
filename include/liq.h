@@ -11,20 +11,33 @@ namespace liq {
 
 #define MAX_NAME_LEN    256
 
-    class CommonService {
+    class ITickCB {
         public:
-            virtual int onload(ArduinoJson::JsonObject &cfg) {
-                return 0;
-            }
-            virtual int oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
-                return 0;
-            }
+            virtual int ontick() = 0;
+    };
+    
+    class LiqState {
+        public:
+            LiqState(const char *cfgfile);
+
+            int ontick();
+            void regist_tick_cb(const std::string &name, ITickCB *cb);
+
+        private:
+            std::string cfgfile;
+            std::map<std::string, ITickCB*> tick_cbs;
     };
 
+    class CommonService {
+        public:
+            virtual int onload(LiqState *liq, ArduinoJson::JsonObject &cfg);
+            virtual int oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps);
+    };
+
+    extern "C" {
+        LiqState *liq_init(const char *cfgfile);
+    }
 }
 
-extern "C" {
-    void liq_init(const char *cfgfile);
-}
 
 #endif

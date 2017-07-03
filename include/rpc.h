@@ -11,7 +11,7 @@ namespace liq {
             virtual uint8_t* alloc(int32_t len) {
                 return new uint8_t[len];
             }
-            virtual uint8_t* free(uint8_t *buff) {
+            virtual void free(uint8_t *buff) {
                 delete buff;
             }
             virtual void call(const char *name, const uint8_t *req, int32_t reqLen,  uint8_t **resBuff, int32_t *resLen) {

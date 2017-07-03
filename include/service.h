@@ -16,6 +16,6 @@ namespace liq {
         static std::map<std::string, CommonSkeleton*> skeletons;
 
     public:
-        static void load_cfg(ArduinoJson::JsonObject &cfg);
+        static void load_cfg(LiqState* liq, ArduinoJson::JsonObject &cfg);
     };
 }

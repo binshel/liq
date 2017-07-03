@@ -24,24 +24,17 @@
 #include "rpc.h"
 #include "service.h"
 
-using namespace liq;
 
-/*
-int main(int argc, const char *argv[])
-{
-    command_line::init(argc, argv);
-    command_line::debug();
+namespace liq {
+    int CommonService::onload(LiqState *liq, ArduinoJson::JsonObject &cfg) {
+        return 0;
+    }
+    int CommonService::oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
+        return 0;
+    }
 
-    module_loader::init();
-    module_manager::init();
-
-    return 0;
-}
-*/
-
-
-extern "C" {
-    void liq_init(const char *cfgfile) {
+    LiqState::LiqState(const char *cfgfile) {
+        this->cfgfile = cfgfile;
         ArduinoJson::DynamicJsonBuffer json_buff(5120);       
         std::fstream fs_cfg;
         fs_cfg.open(cfgfile, std::fstream::in | std::fstream::binary);
@@ -52,9 +45,26 @@ extern "C" {
             exit(-1);
         }
         for (auto it = root.begin(); it != root.end(); ++it) {
-                printf("key: %s\n", it->key);
+            printf("key: %s\n", it->key);
         }
 
-        ServiceManager::load_cfg(root);
+        ServiceManager::load_cfg(this, root);
+    }
+    int LiqState::ontick() {
+        int count = 0;
+        for (auto cb = tick_cbs.begin(); cb != tick_cbs.end(); ++cb) {
+            count += cb->second->ontick();
+        }
+        return count;
+    }
+    void LiqState::regist_tick_cb(const std::string &name, ITickCB *cb) {
+        this->tick_cbs[name] = cb;
+    }
+
+
+    extern "C" {
+        LiqState* liq_init(const char *cfgfile) {
+            return new LiqState(cfgfile);
+        }
     }
 }
