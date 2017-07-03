@@ -8,21 +8,19 @@ namespace liq {
 
     class RPC {
         public:
-            virtual uint8_t* alloc(int32_t len) {
-                return new uint8_t[len];
-            }
-            virtual void free(uint8_t *buff) {
-                delete buff;
-            }
-            virtual void call(const char *name, const uint8_t *req, int32_t reqLen,  uint8_t **resBuff, int32_t *resLen) {
-            }
+            virtual uint8_t* alloc(int32_t len);
+            virtual void free(uint8_t *buff);
+            virtual void call(const char *name, const uint8_t *req, int32_t reqLen,  uint8_t **resBuff, int32_t *resLen);
     };
     
     class RPCManager {
         public:
+            static uint8_t *get_buff();
             static RPC* create_rpc(const char *from, const char *to) {
                 return new RPC();
             }
+        private:
+            static uint8_t buff[1024];
 
     };
 

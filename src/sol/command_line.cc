@@ -46,13 +46,13 @@ void command_line::init(int argc, const char *argv[])
     }
 }
 
-std::string command_line::get_value(std::string &key)
+std::string* command_line::get_value(std::string &key)
 {
     auto it = instance.values.find(key);
     if (it == instance.values.end()) {
-        return "";
+        return NULL;
     } else {
-        return it->second;
+        return &(it->second);
     }
 }
 bool command_line::has_option(std::string &option)

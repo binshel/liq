@@ -17,7 +17,7 @@ private:
 
 public:
     static void init(int argc, const char *argv[]);
-    static std::string get_value(std::string &key);
+    static std::string* get_value(std::string &key);
     static bool has_option(std::string &option);
     static std::vector<std::string> get_files();
     static void debug();
