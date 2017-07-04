@@ -1,7 +1,7 @@
 /*
  * =====================================================================================
  *
- *       Filename:  command_line.cc
+ *       Filename:  CommandLine.cc
  *
  *    Description:  
  *
@@ -19,16 +19,16 @@
 
 #include "command_line.h"
 
-command_line command_line::instance;
+CommandLine CommandLine::instance;
 
-command_line::command_line()
+CommandLine::CommandLine()
 {
     this->values.clear();
     this->options.clear();
     this->files.clear();
 }
 
-void command_line::init(int argc, const char *argv[])
+void CommandLine::init(int argc, char * const argv[])
 {
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
@@ -46,7 +46,7 @@ void command_line::init(int argc, const char *argv[])
     }
 }
 
-std::string* command_line::get_value(std::string &key)
+std::string* CommandLine::get_value(const std::string &key)
 {
     auto it = instance.values.find(key);
     if (it == instance.values.end()) {
@@ -55,7 +55,7 @@ std::string* command_line::get_value(std::string &key)
         return &(it->second);
     }
 }
-bool command_line::has_option(std::string &option)
+bool CommandLine::has_option(const std::string &option)
 {
     auto it = instance.options.find(option);
     if (it == instance.options.end()) {
@@ -65,11 +65,11 @@ bool command_line::has_option(std::string &option)
     }
 
 }
-std::vector<std::string> command_line::get_files()
+std::vector<std::string> CommandLine::get_files()
 {
     return instance.files;
 }
-void command_line::debug()
+void CommandLine::debug()
 {
     std::cout << "command line values" << std::endl;
     for (auto it = instance.values.begin(); 

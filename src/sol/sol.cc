@@ -17,12 +17,12 @@ void usage(int argc, char *argv[]) {
 
 
 int main(int argc, char *argv[]) {
-    command_line::init(argc, argv);
-    std::string *cfgpath = command_line::get_value("cfgpath")
+    CommandLine::init(argc, argv);
+    std::string *cfgpath = CommandLine::get_value("cfgpath");
     if (!cfgpath) {
         usage(argc, argv);
     }
-    liq::LiqState *liq = liq::liq_init(cfgpath);
+    liq::LiqState *liq = liq::liq_init(cfgpath->c_str());
 
     for (;;) {
         int count = liq->ontick();

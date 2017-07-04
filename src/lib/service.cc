@@ -23,11 +23,11 @@ namespace liq {
             printf("stub name:[%s],module:[%s]\n", name, (const char*)stub_cfg["module"]);
 
             // load pb
-            snprintf(name_buf, MAX_NAME_LEN, "lib%s.pb.so", (const char*)stub_cfg["module"]);
+            snprintf(name_buf, MAX_NAME_LEN, "%s.pb.so", (const char*)stub_cfg["module"]);
             Module *module = ModuleManager::Load(name_buf);
 
             // create stub
-            snprintf(name_buf, MAX_NAME_LEN, "lib%s.stub.so", stub_cfg["module"]);
+            snprintf(name_buf, MAX_NAME_LEN, "%s.stub.so", stub_cfg["module"]);
             module = ModuleManager::Load(name_buf);
             CommonService *service = module->create_service();
             CommonStub *stub = (CommonStub*)service;
@@ -43,18 +43,18 @@ namespace liq {
             printf("service name:[%s],module:[%s]\n", name, (const char*)service_cfg["module"]);
 
             // load pb
-            snprintf(name_buf, MAX_NAME_LEN, "lib%s.pb.so", (const char*)service_cfg["module"]);
+            snprintf(name_buf, MAX_NAME_LEN, "%s.pb.so", (const char*)service_cfg["module"]);
             Module *module = ModuleManager::Load(name_buf);
 
             // create service
-            snprintf(name_buf, MAX_NAME_LEN, "lib%s.so", (const char*)service_cfg["module"]);
+            snprintf(name_buf, MAX_NAME_LEN, "%s.so", (const char*)service_cfg["module"]);
             module = ModuleManager::Load(name_buf);
             CommonService *service = module->create_service();
             services[name] = service;
             service->onload(liq, service_cfg);
 
             // create skeleton
-            snprintf(name_buf, MAX_NAME_LEN, "lib%s.skeleton.so", (const char*)service_cfg["module"]);
+            snprintf(name_buf, MAX_NAME_LEN, "%s.skeleton.so", (const char*)service_cfg["module"]);
             module = ModuleManager::Load(name_buf);
             CommonSkeleton *skeleton = (CommonSkeleton*)module->create_service();
             skeletons[name_buf] = skeleton;

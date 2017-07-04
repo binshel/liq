@@ -4,21 +4,21 @@
 #include <set>
 #include <vector>
 
-class command_line
+class CommandLine
 {
 private:
-    static command_line instance;
+    static CommandLine instance;
 
     std::map<std::string, std::string> values;
     std::set<std::string> options;
     std::vector<std::string> files;
 
-    command_line();
+    CommandLine();
 
 public:
-    static void init(int argc, const char *argv[]);
-    static std::string* get_value(std::string &key);
-    static bool has_option(std::string &option);
+    static void init(int argc, char * const argv[]);
+    static std::string* get_value(const std::string &key);
+    static bool has_option(const std::string &option);
     static std::vector<std::string> get_files();
     static void debug();
 };

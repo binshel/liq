@@ -15,6 +15,7 @@ namespace liq {
     }
 
 
+    uint8_t RPCManager::buff[1024];
     uint8_t *RPCManager::get_buff() {
         return buff;
     }
