@@ -17,14 +17,10 @@ foreach(source ${sources})
         )
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
     add_library(${service} SHARED ${service}.cc pb/test_s.h)
-    SET_TARGET_PROPERTIES(${service} PROPERTIES PREFIX "")
-
     add_library(${service}.pb SHARED pb/${service}.pb.cc)
-    SET_TARGET_PROPERTIES(${service}.pb PROPERTIES PREFIX "")
-
     add_library(${service}.stub SHARED pb/${service}.stub.cc)
-    SET_TARGET_PROPERTIES(${service}.stub PROPERTIES PREFIX "")
-
     add_library(${service}.skeleton SHARED pb/${service}.skeleton.cc)
-    SET_TARGET_PROPERTIES(${service}.skeleton PROPERTIES PREFIX "")
+
+    SET_TARGET_PROPERTIES(${service} ${service}.pb ${service}.stub ${service}.skeleton 
+        PROPERTIES PREFIX "")
 endforeach(source)

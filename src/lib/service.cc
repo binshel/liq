@@ -27,7 +27,7 @@ namespace liq {
             Module *module = ModuleManager::Load(name_buf);
 
             // create stub
-            snprintf(name_buf, MAX_NAME_LEN, "%s.stub.so", stub_cfg["module"]);
+            snprintf(name_buf, MAX_NAME_LEN, "%s.stub.so", (const char*)stub_cfg["module"]);
             module = ModuleManager::Load(name_buf);
             CommonService *service = module->create_service();
             CommonStub *stub = (CommonStub*)service;
