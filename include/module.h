@@ -21,12 +21,12 @@ namespace liq {
 
 
     class ModuleManager {
-    private:
-        static std::map<std::string, Module*> modules;
+    public:
+        Module *load(const std::string &path);
 
     private:
-        static Module *LoadFile(const std::string &path);
-    public:
-        static Module *Load(const std::string &path);
+        Module *load_file(const std::string &path);
+    private:
+        std::map<std::string, Module*> modules;
     };
 }

@@ -20,11 +20,11 @@ namespace liq {
 
             // load pb
             snprintf(name_buf, MAX_NAME_LEN, "%s.pb.so", (const char*)stub_cfg["module"]);
-            Module *module = ModuleManager::Load(name_buf);
+            Module *module = liq->module_manager->load(name_buf);
 
             // create stub
             snprintf(name_buf, MAX_NAME_LEN, "%s.stub.so", (const char*)stub_cfg["module"]);
-            module = ModuleManager::Load(name_buf);
+            module = liq->module_manager->load(name_buf);
             CommonService *service = module->create_service();
             CommonStub *stub = (CommonStub*)service;
             stub->set_rpc(new RPC(liq->thread_pool, "self", (const char *)stub_cfg["remote"]));
@@ -40,18 +40,18 @@ namespace liq {
 
             // load pb
             snprintf(name_buf, MAX_NAME_LEN, "%s.pb.so", (const char*)service_cfg["module"]);
-            Module *module = ModuleManager::Load(name_buf);
+            Module *module = liq->module_manager->load(name_buf);
 
             // create service
             snprintf(name_buf, MAX_NAME_LEN, "%s.so", (const char*)service_cfg["module"]);
-            module = ModuleManager::Load(name_buf);
+            module = liq->module_manager->load(name_buf);
             CommonService *service = module->create_service();
             services[name] = service;
             service->onload(liq, service_cfg);
 
             // create skeleton
             snprintf(name_buf, MAX_NAME_LEN, "%s.skeleton.so", (const char*)service_cfg["module"]);
-            module = ModuleManager::Load(name_buf);
+            module = liq->module_manager->load(name_buf);
             CommonSkeleton *skeleton = (CommonSkeleton*)module->create_service();
             skeletons[name_buf] = skeleton;
             skeleton->set_backend(service);

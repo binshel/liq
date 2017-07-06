@@ -23,6 +23,7 @@
 #include "liq.h"
 #include "rpc.h"
 #include "service.h"
+#include "module.h"
 
 
 namespace liq {
@@ -45,6 +46,7 @@ namespace liq {
             exit(-1);
         }
 
+        this->module_manager = new ModuleManager();
         this->thread_pool = new ThreadPool();
         this->service_manager = new ServiceManager(this, root);
     }

@@ -26,19 +26,17 @@ namespace fs = boost::filesystem;
 
 namespace liq {
 
-std::map<std::string, Module*> ModuleManager::modules;
 
-
-Module* ModuleManager::Load(const std::string &path)
+Module* ModuleManager::load(const std::string &path)
 {
     std::string full_path = fs::absolute(fs::path(path)).normalize().string();
     if (modules.find(full_path) == modules.end()) {
-        LoadFile(full_path);
+        load_file(full_path);
     } 
     return modules[full_path];
 }
 
-Module* ModuleManager::LoadFile(const std::string &path)
+Module* ModuleManager::load_file(const std::string &path)
 {
     Module *module = new Module();
     void *handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);

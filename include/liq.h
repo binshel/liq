@@ -12,6 +12,7 @@ namespace liq {
 #define MAX_NAME_LEN    256
     class ServiceManager;
     class ThreadPool;
+    class ModuleManager;
 
     class ITickCB {
         public:
@@ -28,6 +29,7 @@ namespace liq {
         public:
             ThreadPool *thread_pool;
             ServiceManager *service_manager;
+            ModuleManager *module_manager;
         private:
             std::string cfgfile;
             std::map<std::string, ITickCB*> tick_cbs;
