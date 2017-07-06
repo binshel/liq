@@ -6,16 +6,18 @@
 
 #include "module.h"
 #include "rpc.h"
+#include "liq.h"
 
 namespace liq {
 
     class ServiceManager
     {
     private:
-        static std::map<std::string, CommonService*> services;
-        static std::map<std::string, CommonSkeleton*> skeletons;
+        std::map<std::string, CommonService*> services;
+        std::map<std::string, CommonSkeleton*> skeletons;
 
     public:
-        static void load_cfg(LiqState* liq, ArduinoJson::JsonObject &cfg);
+        ServiceManager() = delete;
+        ServiceManager(LiqState* liq, ArduinoJson::JsonObject &cfg);
     };
 }

@@ -10,6 +10,8 @@
 namespace liq {
 
 #define MAX_NAME_LEN    256
+    class ServiceManager;
+    class ThreadPool;
 
     class ITickCB {
         public:
@@ -23,6 +25,9 @@ namespace liq {
             int ontick();
             void regist_tick_cb(const std::string &name, ITickCB *cb);
 
+        public:
+            ThreadPool *thread_pool;
+            ServiceManager *service_manager;
         private:
             std::string cfgfile;
             std::map<std::string, ITickCB*> tick_cbs;

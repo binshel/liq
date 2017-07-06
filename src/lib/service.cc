@@ -2,16 +2,12 @@
 #include <string>
 
 #include "service.h"
-#include "rpc.h"
-
 
 namespace liq {
 
-    std::map<std::string, CommonService*> ServiceManager::services;
-    std::map<std::string, CommonSkeleton*> ServiceManager::skeletons;
 
 
-    void ServiceManager::load_cfg(LiqState *liq, ArduinoJson::JsonObject &cfg) {
+    ServiceManager::ServiceManager(LiqState *liq, ArduinoJson::JsonObject &cfg) {
         ArduinoJson::JsonObject &service_root = cfg["services"];
         ArduinoJson::JsonObject &stub_root = cfg["stubs"];
 
@@ -31,7 +27,7 @@ namespace liq {
             module = ModuleManager::Load(name_buf);
             CommonService *service = module->create_service();
             CommonStub *stub = (CommonStub*)service;
-            stub->set_rpc(RPCManager::create_rpc("self", (const char *)stub_cfg["remote"]));
+            stub->set_rpc(new RPC(liq->thread_pool, "self", (const char *)stub_cfg["remote"]));
             services[name] = service;
         }
 

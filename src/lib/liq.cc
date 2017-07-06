@@ -44,11 +44,9 @@ namespace liq {
             printf("json parse error\n");
             exit(-1);
         }
-        for (auto it = root.begin(); it != root.end(); ++it) {
-            printf("key: %s\n", it->key);
-        }
 
-        ServiceManager::load_cfg(this, root);
+        this->thread_pool = new ThreadPool();
+        this->service_manager = new ServiceManager(this, root);
     }
     int LiqState::ontick() {
         int count = 0;
