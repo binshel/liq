@@ -2,6 +2,7 @@
 #include <string>
 
 #include "service.h"
+#include "rpc.h"
 
 namespace liq {
 
@@ -27,7 +28,7 @@ namespace liq {
             module = liq->module_manager->load(name_buf);
             CommonService *service = module->create_service();
             CommonStub *stub = (CommonStub*)service;
-            stub->set_rpc(new RPC(liq->thread_pool, "self", (const char *)stub_cfg["remote"]));
+            stub->set_rpc(liq->rpc_manager->create_rpc(RPCManager::IPC_SHM, name, (const char *)stub_cfg["remote"]));
             services[name] = service;
         }
 

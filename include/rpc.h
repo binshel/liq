@@ -7,38 +7,49 @@
 
 namespace liq {
 
+    class IPCBase {
+    public:
+        virtual int32_t send(const uint8_t *data, int32_t len) = 0;
+    };
+
+
+    class RPCManager;
     class RPC {
         public:
             RPC() = delete;
-            RPC(ThreadPool *thread_pool, const char *from, const char *to);
+            RPC(RPCManager *manager, IPCBase *ipc, const std::string &name);
 
             virtual uint8_t* alloc(int32_t len);
             virtual void free(uint8_t *buff);
-            virtual void call(const char *name, const uint8_t *req, int32_t reqLen,  uint8_t **resBuff, int32_t *resLen);
+            virtual void call(const char *method, google::protobuf::Message &message,  uint8_t **resBuff, int32_t *resLen);
 
         private:
-            ThreadPool *thread_pool;
-            const char *from;
-            const char *to;
+            RPCManager *manager;
+            IPCBase *ipc;
+            std::string name;
         private:
-            static uint8_t buff[1024];
-
+            static int32_t last_id;
     };
     
 
-    class CommonStub : public CommonService {
-        protected:
-            RPC *rpc;
-        public:
-            virtual void set_rpc(RPC *rpc) {
-                this->rpc = rpc;
-            }
+    class IPCShm;
+    class RPCManager {
+        friend class RPC;
+    public:
+        enum IPC_TYPE {
+            IPC_SHM     = 1
+        };
+
+        RPCManager() = delete;
+        RPCManager(LiqState *liq);
+
+        RPC* create_rpc(IPC_TYPE type, const char *name, const char *remote);
+        int32_t ontick();
+    protected:
+        LiqState *liq;
+        std::map<std::string, IPCShm*> shms;
+        uint8_t buff[2018];
     };
 
-    class CommonSkeleton : public CommonService {
-        public:
-            virtual void set_backend(CommonService *service) = 0;
-            virtual google::protobuf::Message* handle(const char *method, uint8_t *reqBuff, int reqLen) = 0;
-    };
 
 }

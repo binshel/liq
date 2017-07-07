@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 
+#include <google/protobuf/message.h>
 #include <arduino_json/arduino_json.hpp>
 
 namespace liq {
@@ -13,6 +14,8 @@ namespace liq {
     class ServiceManager;
     class ThreadPool;
     class ModuleManager;
+    class RPC;
+    class RPCManager;
 
     class ITickCB {
         public:
@@ -30,6 +33,7 @@ namespace liq {
             ThreadPool *thread_pool;
             ServiceManager *service_manager;
             ModuleManager *module_manager;
+            RPCManager *rpc_manager;
         private:
             std::string cfgfile;
             std::map<std::string, ITickCB*> tick_cbs;
@@ -39,6 +43,19 @@ namespace liq {
         public:
             virtual int onload(LiqState *liq, ArduinoJson::JsonObject &cfg);
             virtual int oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps);
+    };
+
+    class CommonStub : public CommonService {
+        protected:
+            RPC *rpc;
+        public:
+            virtual void set_rpc(RPC *rpc);
+    };
+
+    class CommonSkeleton : public CommonService {
+        public:
+            virtual void set_backend(CommonService *service) = 0;
+            virtual google::protobuf::Message* handle(const char *method, uint8_t *reqBuff, int reqLen) = 0;
     };
 
     extern "C" {

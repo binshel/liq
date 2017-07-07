@@ -30,9 +30,11 @@ namespace liq {
     };
 
 
-
     class ThreadPool {
         public:
+            enum EVENT {
+                EVENT_RPC       = 1
+            };
             friend class ThreadBase;
             ThreadPool();
 

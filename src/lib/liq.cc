@@ -33,6 +33,9 @@ namespace liq {
     int CommonService::oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
         return 0;
     }
+    void CommonStub::set_rpc(RPC *rpc) {
+        this->rpc = rpc;
+    }
 
     LiqState::LiqState(const char *cfgfile) {
         this->cfgfile = cfgfile;
@@ -46,6 +49,8 @@ namespace liq {
             exit(-1);
         }
 
+        
+        this->rpc_manager = new RPCManager(this);
         this->module_manager = new ModuleManager();
         this->thread_pool = new ThreadPool();
         this->service_manager = new ServiceManager(this, root);
