@@ -17,6 +17,7 @@ file(GLOB liq_sources "src/lib/*.cc")
 add_library(liq SHARED ${liq_sources})
 target_link_libraries(liq boost_filesystem dl protobuf shmchannel)
 target_include_directories(liq PUBLIC "/home/ezfun/server/frame/src/comm/shm_channel")
+target_include_directories(liq PUBLIC "/home/ezfun/server/frame/src/common/autogen")
 
 file(GLOB sol_sources "src/sol/*.cc")
 add_executable(sol ${sol_sources})

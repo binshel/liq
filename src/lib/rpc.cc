@@ -1,4 +1,5 @@
 
+#include "errorcode.h"
 #include "shm_channel.h"
 #include "rpc.h"
 
@@ -34,9 +35,11 @@ namespace liq {
         virtual int32_t recv(uint8_t *buff) {
             const char *data = NULL;
             int len = 0;
-            shm_channel_peek_recv(this->channel, &data, &len);
-            memcpy(buff, data, len);
-            shm_channel_recv_peek(this->channel);
+            int r = shm_channel_peek_recv(this->channel, &data, &len);
+            if (r == ERRORCODE_SUCESS) {
+                memcpy(buff, data, len);
+                shm_channel_recv_peek(this->channel);
+            }
             return len;
         }
         
@@ -90,6 +93,8 @@ namespace liq {
         IPCData data;
         for (auto it = this->shms.begin(); it != this->shms.end(); ++it) {
             int32_t len = it->second->recv(this->buff);
+            if (len <= 0) continue;
+            printf("shm len: %d\n", len);
             RPCHeader *header = (RPCHeader*)this->buff;
             if (header->type == 1) {        // becall
             } else if (header->type == 2) {    // call return
