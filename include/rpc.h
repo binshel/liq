@@ -19,8 +19,6 @@ namespace liq {
             RPC() = delete;
             RPC(RPCManager *manager, IPCBase *ipc, const std::string &name);
 
-            virtual uint8_t* alloc(int32_t len);
-            virtual void free(uint8_t *buff);
             virtual void call(const char *method, google::protobuf::Message &message,  uint8_t **resBuff, int32_t *resLen);
 
         private:
