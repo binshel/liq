@@ -15,6 +15,7 @@ namespace test {
 
         int ontick() {
             SearchRequest request;
+            request.set_dd(23.23);
             SearchResponse *res = server->search(&request);
             if (res) {
                 printf("%s:%d ontick [%d]\n", __FILE__, __LINE__, res->num());

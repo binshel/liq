@@ -12,12 +12,20 @@ namespace liq {
 
     class ServiceManager
     {
-    private:
-        std::map<std::string, CommonService*> services;
-        std::map<std::string, CommonSkeleton*> skeletons;
-
     public:
         ServiceManager() = delete;
         ServiceManager(LiqState* liq, ArduinoJson::JsonObject &cfg);
+
+        CommonSkeleton* get_skeleton(const char *name);
+
+    private:
+        void add_stubs(ArduinoJson::JsonObject &stub_root);
+        void add_services(ArduinoJson::JsonObject &service_root);
+        void add_accepts(ArduinoJson::JsonArray &accept_root);
+
+        std::map<std::string, CommonService*> services;
+        std::map<std::string, CommonSkeleton*> skeletons;
+        LiqState *liq;
+
     };
 }

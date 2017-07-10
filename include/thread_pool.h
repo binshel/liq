@@ -13,6 +13,7 @@ namespace liq {
 
     class ThreadBase {
         public:
+            typedef void (*fun_enter)(void*);
             friend class ThreadPool;
             ThreadBase() = delete;
             ThreadBase(ThreadPool *belong);
@@ -20,7 +21,7 @@ namespace liq {
         private:
             static int32_t now_id;
             int32_t id;
-            void (*enter)(void*);
+            fun_enter enter;
             void *args;
 
             ucontext_t ucp;
@@ -35,16 +36,16 @@ namespace liq {
             enum EVENT {
                 EVENT_RPC       = 1
             };
+
             friend class ThreadBase;
             ThreadPool();
 
-            int32_t spawn(void(*enter)(void*), void* args);
+            void spawn(ThreadBase::fun_enter enter, void* args);
 
             void* yield(int32_t event, int32_t value);
             int notify(int32_t event, int32_t value, void *args);
 
         private:
-            void resume(ThreadBase *thread);
             void free();
             void swap_to(ThreadBase *to);
             ThreadBase* get_free_thread();

@@ -10,7 +10,8 @@ void usage(int argc, char *argv[]) {
     printf(
         "Usage %s [option]\n"
         "options:\n"
-        "  --cfgpath=cfgpath\n"
+        "  --name node_name\n"
+        "  --cfgpath cfgpath\n"
         , argv[0]);
     exit(-1);
 }
@@ -19,10 +20,11 @@ void usage(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
     CommandLine::init(argc, argv);
     std::string *cfgpath = CommandLine::get_value("cfgpath");
-    if (!cfgpath) {
+    std::string *node_name = CommandLine::get_value("name");
+    if (!cfgpath || !node_name) {
         usage(argc, argv);
     }
-    liq::LiqState *liq = liq::liq_init(cfgpath->c_str());
+    liq::LiqState *liq = liq::liq_init(node_name->c_str(), cfgpath->c_str());
 
     for (;;) {
         int count = liq->ontick();

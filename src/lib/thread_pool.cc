@@ -35,12 +35,13 @@ namespace liq {
         this->main_thread = new ThreadBase(this);
         this->running = this->main_thread;
     }
-    int32_t ThreadPool::spawn(void(*enter)(void*), void* args)
+    void ThreadPool::spawn(ThreadBase::fun_enter enter, void* args)
     {
         ThreadBase *thread = this->get_free_thread();
         thread->enter = enter;
         thread->args = args;
-        this->resume(thread);
+        thread->parent = this->running;
+        this->swap_to(thread);
     }
 
     void* ThreadPool::yield(int32_t event, int32_t value)
@@ -62,12 +63,6 @@ namespace liq {
             this->swap_to(it_thread->second);
         }
         return count;
-    }
-
-    void ThreadPool::resume(ThreadBase *thread)
-    {
-        thread->parent = this->running;
-        this->swap_to(thread);
     }
 
     void ThreadPool::free()

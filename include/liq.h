@@ -18,13 +18,18 @@ namespace liq {
     class RPCManager;
 
     class ITickCB {
+        friend class LiqState;
         public:
+            ITickCB();
             virtual int ontick() = 0;
+        protected:
+            bool intick;
+            static void call(ITickCB *cb);
     };
     
     class LiqState {
         public:
-            LiqState(const char *cfgfile);
+            LiqState(const char * node_name, const char *cfgfile);
 
             int ontick();
             void regist_tick_cb(const std::string &name, ITickCB *cb);
@@ -59,7 +64,7 @@ namespace liq {
     };
 
     extern "C" {
-        LiqState *liq_init(const char *cfgfile);
+        LiqState *liq_init(const char *node_name, const char *cfgfile);
     }
 }
 
