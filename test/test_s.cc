@@ -26,6 +26,7 @@ namespace test {
                 bool bb, 
                 ENUM ee, 
                 string* str) {
+            printf("get dd %lf\n", dd);
             SearchResponse *res = new SearchResponse();
             res->set_num(this->count);
         }

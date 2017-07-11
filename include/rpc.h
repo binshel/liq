@@ -25,7 +25,6 @@ namespace liq {
             RPCManager *manager;
             IPCBase *ipc;
             std::string name;
-        private:
             static int32_t last_id;
     };
     
@@ -46,7 +45,17 @@ namespace liq {
         int32_t ontick();
 
     private:
-        void on_becall(IPCBase *ipc, uint8_t *data, int32_t len);
+        struct BecallArg {
+            RPCManager *manager;
+            IPCBase *ipc;
+            uint8_t *data;
+            int32_t data_len;
+        };
+        struct ReturnArg {
+            uint8_t *data;
+            int32_t data_len;
+        };
+        static void on_becall(BecallArg *arg);
 
     protected:
         std::string node_name;

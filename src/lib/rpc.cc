@@ -7,10 +7,6 @@
 
 namespace liq {
 
-    struct IPCData {
-        uint32_t len;
-        uint8_t *data;
-    };
 #pragma pack(1)
     struct RPCHeader {
         int8_t  type;           // req:1 ; res:2
@@ -38,8 +34,11 @@ namespace liq {
             int len = 0;
             int r = shm_channel_peek_recv(this->channel, &data, &len);
             if (r == ERRORCODE_SUCESS) {
+                printf("channel recv len %d:%d\n", r, len);
                 memcpy(buff, data, len);
                 shm_channel_recv_peek(this->channel);
+            } else if (r != ERRORCODE_CHANNEL_EMPTY) {
+                printf("channel recv error %d\n", r);
             }
             return len;
         }
@@ -69,10 +68,12 @@ namespace liq {
         memcpy(buff, method, header.method_len); buff += header.method_len;
         message.SerializeWithCachedSizesToArray(buff); buff += header.data_len;
 
-        this->ipc->send(manager->buff, buff - manager->buff);
-        IPCData *res = (IPCData*)manager->liq->thread_pool->yield(ThreadPool::EVENT_RPC, header.rid);
+        printf("rpc call[%d] %s::%s %d:%d\n", header.rid, this->name.c_str(), method, header.data_len, buff - manager->buff);
+        int code = this->ipc->send(manager->buff, buff - manager->buff);
+        printf("ipc code[%d]\n", code);
+        RPCManager::ReturnArg *res = (RPCManager::ReturnArg*)manager->liq->thread_pool->yield(ThreadPool::EVENT_RPC, header.rid);
         *res_buff = res->data;
-        *res_len = res->len;
+        *res_len = res->data_len;
         return;
     }
 
@@ -96,34 +97,43 @@ namespace liq {
     }
 
     int32_t RPCManager::ontick() {
-        IPCData data;
         for (auto it = this->shms.begin(); it != this->shms.end(); ++it) {
             int32_t len = it->second->recv(this->buff);
             if (len <= 0) continue;
             printf("shm len: %d\n", len);
             RPCHeader *header = (RPCHeader*)this->buff;
             if (header->type == 1) {        // becall
-                this->on_becall(it->second, this->buff, len);
+                BecallArg arg = {
+                    .manager    = this,
+                    .ipc        = it->second,
+                    .data       = this->buff,
+                    .data_len   = len
+                };
+                liq->thread_pool->spawn((ThreadBase::fun_enter)RPCManager::on_becall, &arg);
             } else if (header->type == 2) {    // call return
-                int32_t id = *(int32_t*)this->buff;
-                data.len = len;
-                data.data = this->buff;
-                liq->thread_pool->notify(ThreadPool::EVENT_RPC, id, &data);
+                uint8_t *p = this->buff + sizeof(*header);
+                RPCManager::ReturnArg ret = {
+                    .data = p + header->name_len + header->method_len,
+                    .data_len = header->data_len
+                };
+                printf("call return[%d] %d:%d\n", header->rid, len - (ret.data - this->buff), ret.data_len);
+                liq->thread_pool->notify(ThreadPool::EVENT_RPC, header->rid, &ret);
             }
 
         }
     }
 
-    void RPCManager::on_becall(IPCBase *ipc, uint8_t *data, int32_t len) {
-        RPCHeader header = *(RPCHeader*)data;
+    void RPCManager::on_becall(BecallArg *p_arg) {
+        BecallArg arg = *p_arg;
+        RPCHeader header = *(RPCHeader*)arg.data;
         char service_name[256];
         char method_name[256];
-        uint8_t *p = data + sizeof(header);
+        uint8_t *p = arg.data + sizeof(header);
         strncpy(service_name, (const char*)p, header.name_len); p += header.name_len;
         strncpy(method_name, (const char*)p, header.method_len); p += header.method_len;
-        printf("call method %s::%s[%d:%d]\n", service_name, method_name, len - (p - this->buff), header.data_len);
+        printf("call method[%d] %s::%s[%d:%d]\n", header.rid, service_name, method_name, arg.data_len - (p - arg.data), header.data_len);
 
-        CommonSkeleton *skeleton = liq->service_manager->get_skeleton(service_name);
+        CommonSkeleton *skeleton = arg.manager->liq->service_manager->get_skeleton(service_name);
         if (!skeleton) {
             printf("ERROR no service for %s::%s[%d]\n", service_name, method_name, header.data_len);
             return;
@@ -131,13 +141,14 @@ namespace liq {
         auto res = skeleton->handle(method_name, p, header.data_len);
         header.type = 2;
         header.data_len = res->ByteSize();
-        uint8_t *buff = this->buff;
+        uint8_t *buff = arg.data;
         memcpy(buff, &header, sizeof(header)); buff += sizeof(header);
         memcpy(buff, service_name, header.name_len); buff += header.name_len;
         memcpy(buff, method_name, header.method_len); buff += header.method_len;
         res->SerializeWithCachedSizesToArray(buff); buff += header.data_len;
         delete res;
 
-        ipc->send(this->buff, buff - this->buff);
+        printf("call return[%d] %d:%d\n", header.rid, header.data_len, buff - arg.data);
+        arg.ipc->send(arg.data, buff - arg.data);
     }
 }
