@@ -1,5 +1,4 @@
-#ifndef DSF_COMMON_H_
-#define DSF_COMMON_H_
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -16,6 +15,9 @@ namespace liq {
     class ModuleManager;
     class RPC;
     class RPCManager;
+    namespace io {
+        class IOManager;
+    }
 
     class ITickCB {
         friend class LiqState;
@@ -39,6 +41,7 @@ namespace liq {
             ServiceManager *service_manager;
             ModuleManager *module_manager;
             RPCManager *rpc_manager;
+            io::IOManager *io_manager;
         private:
             std::string cfgfile;
             std::map<std::string, ITickCB*> tick_cbs;
@@ -69,5 +72,3 @@ namespace liq {
     }
 }
 
-
-#endif

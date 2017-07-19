@@ -50,7 +50,7 @@ namespace liq {
                 EVENT_RPC           = 1,
                 EVENT_WRITE         = 2,
                 EVENT_WRITE_SYNC    = 3,
-                EVENT_READ          = 4
+                EVENT_READ_SYNC     = 4
             };
 
             friend class ThreadBase;
