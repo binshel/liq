@@ -24,6 +24,7 @@
 #include "liq/rpc.h"
 #include "liq/service.h"
 #include "liq/module.h"
+#include "liq/io.h"
 
 
 namespace liq {
@@ -67,12 +68,16 @@ namespace liq {
         this->module_manager = new ModuleManager();
         this->thread_pool = new ThreadPool();
         this->service_manager = new ServiceManager(root);
+        this->io_manager = new io::IOManager();
     }
     int LiqState::ontick() {
         int count = 0;
 
         // rpc handle
         count += this->rpc_manager->ontick();
+
+        // io
+        count += this->io_manager->ontick();
 
         // registed tick
         for (auto it_cb = tick_cbs.begin();

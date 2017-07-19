@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sys/epoll.h>
+#include <queue>
 
 #include "liq.h"
 #include "thread_pool.h"
@@ -32,6 +33,7 @@ namespace liq { namespace io {
 
     class File: public IIO {
         public:
+            File();
             ~File();
             int32_t open(const char *path);
             void close();

@@ -30,9 +30,7 @@ int main(int argc, char *argv[]) {
         int count = liq->ontick();
         if (count < 0) {
             break;      // 结束 
-        } else if (count == 0){
-            usleep(10000);   // 暂停
-        }
+        } 
     }
 
     return 0;

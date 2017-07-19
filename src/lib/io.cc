@@ -1,6 +1,5 @@
 #include <fcntl.h>
 #include <unistd.h>
-#include <queue>
 
 #include "liq/io.h"
 #include "liq/liq.h"
@@ -24,6 +23,9 @@ namespace liq { namespace io {
         }
     }
 
+    File::File() {
+        fd = -1;
+    }
     File::~File() {
         this->close();
     }
@@ -35,7 +37,7 @@ namespace liq { namespace io {
             liq->io_manager->regist_io(this);
             return fd;
         } else {
-            return 0;
+            return -1;
         }
     }
     void File::close() {
@@ -132,10 +134,13 @@ namespace liq { namespace io {
         return epoll_ctl(epfd, EPOLL_CTL_DEL, io->fd, NULL);
     }
 
-
     int32_t IOManager::ontick() {
         int count = epoll_wait(epfd, events, EPOLL_SIZE, 10);
         for (int i = 0; i < count; ++i) {
+            IIO *io = (typeof(io))(events[i].data.ptr);
+            if (events[i].events & EPOLLIN) io->on_in();
+            if (events[i].events & EPOLLOUT) io->on_out();
+            if (events[i].events & EPOLLERR) io->on_err();
         }
         return count;
     }

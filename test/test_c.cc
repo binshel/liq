@@ -18,9 +18,9 @@ namespace test {
             request.set_dd(23.23);
             SearchResponse *res = server->search(&request);
             if (res) {
-                printf("%s:%d ontick [%d]\n", __FILE__, __LINE__, res->num());
+                printf("%s:%d ontick [%d][%s]\n", __FILE__, __LINE__, res->num(), res->reply().c_str());
             } else {
-                printf("%s:%d ontick [%d]\n", __FILE__, __LINE__, 0);
+                printf("%s:%d ontick [NULL]\n", __FILE__, __LINE__);
             }
             return 0;
         }
