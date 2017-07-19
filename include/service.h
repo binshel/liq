@@ -14,7 +14,7 @@ namespace liq {
     {
     public:
         ServiceManager() = delete;
-        ServiceManager(LiqState* liq, ArduinoJson::JsonObject &cfg);
+        ServiceManager(ArduinoJson::JsonObject &cfg);
 
         CommonSkeleton* get_skeleton(const char *name);
 
@@ -25,7 +25,6 @@ namespace liq {
 
         std::map<std::string, CommonService*> services;
         std::map<std::string, CommonSkeleton*> skeletons;
-        LiqState *liq;
 
     };
 }

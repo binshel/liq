@@ -21,6 +21,6 @@ foreach(source ${sources})
     add_library(${service}.stub SHARED pb/${service}.stub.cc)
     add_library(${service}.skeleton SHARED pb/${service}.skeleton.cc)
 
-    SET_TARGET_PROPERTIES(${service} ${service}.pb ${service}.stub ${service}.skeleton 
+    set_target_properties(${service} ${service}.pb ${service}.stub ${service}.skeleton 
         PROPERTIES PREFIX "")
 endforeach(source)

@@ -4,8 +4,8 @@
 namespace test {
     class Search : public liq::ITickCB, public SearchService {
     public:
-        int onload(LiqState *liq, ArduinoJson::JsonObject &cfg) {
-            liq->regist_tick_cb("search_s", this);
+        int onload(ArduinoJson::JsonObject &cfg) {
+            liq::liq->regist_tick_cb("search_s", this);
         }
 
         int ontick() {

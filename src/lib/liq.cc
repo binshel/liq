@@ -27,8 +27,10 @@
 
 
 namespace liq {
+    
+    LiqState *liq = NULL;
 
-    int CommonService::onload(LiqState *liq, ArduinoJson::JsonObject &cfg) {
+    int CommonService::onload(ArduinoJson::JsonObject &cfg) {
         return 0;
     }
     int CommonService::oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
@@ -48,6 +50,7 @@ namespace liq {
     }
 
     LiqState::LiqState(const char *node_name, const char *cfgfile) {
+        liq =  this;
         this->cfgfile = cfgfile;
         ArduinoJson::DynamicJsonBuffer json_buff(5120);       
         std::fstream fs_cfg;
@@ -60,10 +63,10 @@ namespace liq {
         }
 
         
-        this->rpc_manager = new RPCManager(node_name, this);
+        this->rpc_manager = new RPCManager(node_name);
         this->module_manager = new ModuleManager();
         this->thread_pool = new ThreadPool();
-        this->service_manager = new ServiceManager(this, root);
+        this->service_manager = new ServiceManager(root);
     }
     int LiqState::ontick() {
         int count = 0;
@@ -77,7 +80,6 @@ namespace liq {
                 ++it_cb) { 
             ITickCB *cb = it_cb->second;
             if (cb->intick) continue;
-            ++count;
             thread_pool->spawn((ThreadBase::fun_enter)ITickCB::call, cb);
         }
         return count;
@@ -89,7 +91,10 @@ namespace liq {
 
     extern "C" {
         LiqState* liq_init(const char *node_name, const char *cfgfile) {
-            return new LiqState(node_name, cfgfile);
+            if (!liq)  {
+                liq = new LiqState(node_name, cfgfile);
+            }
+            return liq;
         }
     }
 }

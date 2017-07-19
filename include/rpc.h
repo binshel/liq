@@ -25,7 +25,7 @@ namespace liq {
             RPCManager *manager;
             IPCBase *ipc;
             std::string name;
-            static int32_t last_id;
+            static int64_t last_id;
     };
     
 
@@ -38,7 +38,7 @@ namespace liq {
         };
 
         RPCManager() = delete;
-        RPCManager(const char *node_name, LiqState *liq);
+        RPCManager(const char *node_name);
 
         RPC* create_rpc(IPC_TYPE type, const char *name, const char *remote);
         IPCBase* create_ipc(IPC_TYPE type, const char *remote);
@@ -51,7 +51,7 @@ namespace liq {
             uint8_t *data;
             int32_t data_len;
         };
-        struct ReturnArg {
+        struct ReturnArg: public ThreadEvent {
             uint8_t *data;
             int32_t data_len;
         };
@@ -59,8 +59,8 @@ namespace liq {
 
     protected:
         std::string node_name;
-        LiqState *liq;
         std::map<std::string, IPCShm*> shms;
+        std::map<int64_t, int64_t> rid2tid;
         uint8_t buff[2018];
     };
 

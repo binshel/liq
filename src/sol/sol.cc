@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
         if (count < 0) {
             break;      // 结束 
         } else if (count == 0){
-            usleep(100);   // 暂停
+            usleep(10000);   // 暂停
         }
     }
 

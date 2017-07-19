@@ -6,8 +6,8 @@
 namespace test {
     class SearchC : public liq::ITickCB, public SearchCService {
     public:
-        int onload(LiqState *liq, ArduinoJson::JsonObject &cfg) {
-            liq->regist_tick_cb("search_c", this);
+        int onload(ArduinoJson::JsonObject &cfg) {
+            liq::liq->regist_tick_cb("search_c", this);
         }
         int oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
             this->server = (SearchService*)deps["server"];

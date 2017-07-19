@@ -71,19 +71,21 @@ namespace liq {
         printf("rpc call[%d] %s::%s %d:%d\n", header.rid, this->name.c_str(), method, header.data_len, buff - manager->buff);
         int code = this->ipc->send(manager->buff, buff - manager->buff);
         printf("ipc code[%d]\n", code);
-        RPCManager::ReturnArg *res = (RPCManager::ReturnArg*)manager->liq->thread_pool->yield(ThreadPool::EVENT_RPC, header.rid);
+        manager->rid2tid[header.rid] = liq->thread_pool->self();
+        RPCManager::ReturnArg *res = (RPCManager::ReturnArg*)liq->thread_pool->yield(ThreadPool::EVENT_RPC, header.rid);
         *res_buff = res->data;
         *res_len = res->data_len;
+        delete res;
         return;
     }
 
-    int32_t RPC::last_id = 0;
+    int64_t RPC::last_id = 0;
 
 
 
     /** RPCManager **/
-    RPCManager::RPCManager(const char *node_name, LiqState *liq) 
-            : node_name(node_name), liq(liq) {
+    RPCManager::RPCManager(const char *node_name) 
+            : node_name(node_name) {
     }
     RPC* RPCManager::create_rpc(IPC_TYPE type, const char *name, const char *remote) {
         IPCShm *ipc = new IPCShm(node_name, remote);
@@ -97,9 +99,11 @@ namespace liq {
     }
 
     int32_t RPCManager::ontick() {
+        int count = 0;
         for (auto it = this->shms.begin(); it != this->shms.end(); ++it) {
             int32_t len = it->second->recv(this->buff);
             if (len <= 0) continue;
+            ++count;
             printf("shm len: %d\n", len);
             RPCHeader *header = (RPCHeader*)this->buff;
             if (header->type == 1) {        // becall
@@ -112,15 +116,17 @@ namespace liq {
                 liq->thread_pool->spawn((ThreadBase::fun_enter)RPCManager::on_becall, &arg);
             } else if (header->type == 2) {    // call return
                 uint8_t *p = this->buff + sizeof(*header);
-                RPCManager::ReturnArg ret = {
-                    .data = p + header->name_len + header->method_len,
-                    .data_len = header->data_len
-                };
-                printf("call return[%d] %d:%d\n", header->rid, len - (ret.data - this->buff), ret.data_len);
-                liq->thread_pool->notify(ThreadPool::EVENT_RPC, header->rid, &ret);
+                RPCManager::ReturnArg *res = new ReturnArg();
+                res->type = ThreadPool::EVENT_RPC;
+                res->value = header->rid;
+                res->data = p + header->name_len + header->method_len;
+                res->data_len = header->data_len;
+                uint64_t tid = rid2tid[header->rid];
+                printf("call return[%d:%d] %d:%d\n", header->rid, len - (res->data - this->buff), res->data_len);
+                liq->thread_pool->notify(tid, res);
             }
-
         }
+        return count;
     }
 
     void RPCManager::on_becall(BecallArg *p_arg) {
@@ -133,7 +139,7 @@ namespace liq {
         strncpy(method_name, (const char*)p, header.method_len); p += header.method_len;
         printf("call method[%d] %s::%s[%d:%d]\n", header.rid, service_name, method_name, arg.data_len - (p - arg.data), header.data_len);
 
-        CommonSkeleton *skeleton = arg.manager->liq->service_manager->get_skeleton(service_name);
+        CommonSkeleton *skeleton = liq->service_manager->get_skeleton(service_name);
         if (!skeleton) {
             printf("ERROR no service for %s::%s[%d]\n", service_name, method_name, header.data_len);
             return;

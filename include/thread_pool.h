@@ -3,6 +3,7 @@
 #include <ucontext.h>
 
 #include <map>
+#include <list>
 
 
 namespace liq {
@@ -11,6 +12,11 @@ namespace liq {
 
     class ThreadPool;
 
+    struct ThreadEvent {
+        int32_t type;
+        int32_t value;
+    };
+
     class ThreadBase {
         public:
             typedef void (*fun_enter)(void*);
@@ -18,32 +24,45 @@ namespace liq {
             ThreadBase() = delete;
             ThreadBase(ThreadPool *belong);
 
+            void clear();
+            bool can_active(ThreadEvent *event);
+
         private:
-            static int32_t now_id;
-            int32_t id;
+            int64_t id;
             fun_enter enter;
             void *args;
-
             ucontext_t ucp;
             ThreadBase *parent;
             uint8_t stack[STACK_SIZE];
+            std::list<ThreadEvent*> events;
+            bool    is_yield;
+            int32_t yield_type;
+            int32_t yield_value;
 
+        private:
+            static int64_t now_id;
     };
 
 
     class ThreadPool {
         public:
             enum EVENT {
-                EVENT_RPC       = 1
+                EVENT_RPC           = 1,
+                EVENT_WRITE         = 2,
+                EVENT_WRITE_SYNC    = 3,
+                EVENT_READ          = 4
             };
 
             friend class ThreadBase;
             ThreadPool();
 
-            void spawn(ThreadBase::fun_enter enter, void* args);
+            int64_t spawn(ThreadBase::fun_enter enter, void* args);
+            inline int64_t self() {
+                return this->running->id;
+            };
 
-            void* yield(int32_t event, int32_t value);
-            int notify(int32_t event, int32_t value, void *args);
+            ThreadEvent* yield(int32_t type = 0, int32_t value = 0);
+            int notify(int64_t id, ThreadEvent *event);
 
         private:
             void free();
@@ -58,7 +77,7 @@ namespace liq {
             int32_t free_num;
             ThreadBase *running;
             ThreadBase *main_thread;
-            std::map<int64_t, ThreadBase*> suspends;
-            void *notify_args;
+            std::map<int64_t, ThreadBase*> threads;
+            ThreadEvent *notify_event;
     };
 }

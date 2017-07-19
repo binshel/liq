@@ -8,8 +8,7 @@ namespace liq {
 
 
 
-    ServiceManager::ServiceManager(LiqState *liq, ArduinoJson::JsonObject &cfg) {
-        this->liq = liq;
+    ServiceManager::ServiceManager(ArduinoJson::JsonObject &cfg) {
         add_stubs(cfg["stubs"]);
         add_services(cfg["services"]);
         add_accepts(cfg["accepts"]);
@@ -54,7 +53,7 @@ namespace liq {
             module = liq->module_manager->load(name_buf);
             CommonService *service = module->create_service();
             services[name] = service;
-            service->onload(liq, service_cfg);
+            service->onload(service_cfg);
 
             // create skeleton
             snprintf(name_buf, MAX_NAME_LEN, "%s.skeleton.so", (const char*)service_cfg["module"]);

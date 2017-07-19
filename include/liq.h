@@ -46,7 +46,7 @@ namespace liq {
 
     class CommonService {
         public:
-            virtual int onload(LiqState *liq, ArduinoJson::JsonObject &cfg);
+            virtual int onload(ArduinoJson::JsonObject &cfg);
             virtual int oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps);
     };
 
@@ -63,6 +63,7 @@ namespace liq {
             virtual google::protobuf::Message* handle(const char *method, uint8_t *reqBuff, int reqLen) = 0;
     };
 
+    extern LiqState *liq;
     extern "C" {
         LiqState *liq_init(const char *node_name, const char *cfgfile);
     }
