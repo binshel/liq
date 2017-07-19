@@ -112,8 +112,8 @@ void generate_header(const google::protobuf::FileDescriptor* file,
 
     // include
     printer.Print("#include <google/protobuf/io/coded_stream.h>\n");
-    printer.Print("#include \"liq.h\"\n");
-    printer.Print("#include \"rpc.h\"\n");
+    printer.Print("#include \"liq/liq.h\"\n");
+    printer.Print("#include \"liq/rpc.h\"\n");
     printer.Print("#include \"./$h$.pb.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
@@ -194,8 +194,8 @@ void generate_stub(const google::protobuf::FileDescriptor* file,
 
 {
     // include
-    printer.Print("#include \"liq.h\"\n");
-    printer.Print("#include \"rpc.h\"\n");
+    printer.Print("#include \"liq/liq.h\"\n");
+    printer.Print("#include \"liq/rpc.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace
@@ -324,8 +324,8 @@ void  generate_skeleton(const google::protobuf::FileDescriptor* file,
 
     // include
     printer.Print("#include <google/protobuf/io/coded_stream.h>\n");
-    printer.Print("#include \"liq.h\"\n");
-    printer.Print("#include \"rpc.h\"\n");
+    printer.Print("#include \"liq/liq.h\"\n");
+    printer.Print("#include \"liq/rpc.h\"\n");
     printer.Print("#include \"./$h$.h\"\n\n", "h", env.fileShortName);
 
     // using namespace

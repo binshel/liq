@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <queue>
 
-#include "file.h"
-#include "liq.h"
+#include "liq/file.h"
+#include "liq/liq.h"
 
 /*
 

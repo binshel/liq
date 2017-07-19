@@ -3,7 +3,7 @@
 #include <string>
 
 #include "./command_line.h"
-#include "liq.h"
+#include "liq/liq.h"
 
 
 void usage(int argc, char *argv[]) {

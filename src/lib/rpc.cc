@@ -1,8 +1,8 @@
 
 #include "errorcode.h"
 #include "shm_channel.h"
-#include "rpc.h"
-#include "service.h"
+#include "liq/rpc.h"
+#include "liq/service.h"
 
 
 namespace liq {

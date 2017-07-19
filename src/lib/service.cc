@@ -1,8 +1,8 @@
 
 #include <string>
 
-#include "service.h"
-#include "rpc.h"
+#include "liq/service.h"
+#include "liq/rpc.h"
 
 namespace liq {
 

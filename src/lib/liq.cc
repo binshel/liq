@@ -20,10 +20,10 @@
 #include <string>
 #include <fstream>
 
-#include "liq.h"
-#include "rpc.h"
-#include "service.h"
-#include "module.h"
+#include "liq/liq.h"
+#include "liq/rpc.h"
+#include "liq/service.h"
+#include "liq/module.h"
 
 
 namespace liq {

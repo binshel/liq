@@ -19,7 +19,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "module.h"
+#include "liq/module.h"
 
 namespace fs = boost::filesystem;
 
