@@ -1,88 +1,51 @@
 #pragma once
 
 #include <sys/epoll.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/socket.h>
+
 #include <queue>
 
+#include "config.h"
 #include "liq.h"
 #include "thread_pool.h"
 
-namespace liq { namespace io {
 
-    class IOManager;
 
-    struct Event: public ThreadEvent {
-        Event(int32_t type, void *buff, int32_t len, int32_t off = 0);
-        ~Event();
+namespace liq {
 
-        int64_t master;
-        void *buff;
-        int32_t len;
-        int32_t off;
-    };
 
-    class IIO {
-        friend class IOManager;
-        protected:
-        virtual int32_t on_in() = 0;
-        virtual int32_t on_out() = 0;
-        virtual int32_t on_err() = 0;
-
-        int fd;
-        int64_t master;
-    };
-
-    class File: public IIO {
+    class IO {
+        typedef std::function<void(int ev)> fun_fd_cb;
+        class IOArgs {
         public:
-            File();
-            ~File();
-            int32_t open(const char *path);
-            void close();
-            int32_t write(const void *data, int32_t len);
-            int32_t write_sync(const void *data, int32_t len);
-            int32_t read(void *data, int32_t len);
+            inline IOArgs(const fun_fd_cb &on_data)
+                :on_data(on_data)
+            {
+            }
 
-        protected:
-            virtual int32_t on_in();
-            virtual int32_t on_out();
-            virtual int32_t on_err();
-
-        private:
-            int32_t write_buff(ThreadPool::EVENT type, const void *data, int32_t len);
-            int32_t read_buff(ThreadPool::EVENT type, void *data, int32_t len);
-
-        private:
-            std::queue<Event*> write_queue;
-            std::queue<Event*> read_queue;
-    };
-
-    class Tcp {
-    };
-
-    class Udp {
-    };
-
-
-
-    class IOManager {
+            fun_fd_cb on_data;
+        };
     public:
-        IOManager();
+        IO();
 
         int32_t ontick();
-        int regist_io(IIO *io);
-        int unregist_io(IIO *io);
+        int regist_fd(int fd, const fun_fd_cb &on_data);
+        int unregist_fd(int fd);
+        int update_fd(int fd, const fun_fd_cb &on_data);
+
+        static int set_flags(int fd, int flags);
+        static int tcp_listen(int port, int *lfd, const std::string *ip = NULL);
 
     private:
         int epfd;
-#define EPOLL_SIZE  1024
         struct epoll_event events[EPOLL_SIZE];
-
-    public:
-        static inline int64_t new_index() {
-            return ++index;
-        }
-    private:
-        static int64_t index;
+        std::map<int, IOArgs*> registed;
     };
-}}
+
+
+}
 
 

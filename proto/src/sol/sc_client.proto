@@ -1,0 +1,53 @@
+// 导入protobuf基础定义
+import public "base.proto";
+
+// 服务器所属的包，对应c++的名字空间（namespack）
+package sol;
+
+// stop 函数的参数
+message ScStop {
+    required int64 ts = 1;
+}
+
+// reload 函数的参数
+message ScReload {
+    required int64 ts = 1;
+}
+
+// stat 函数的返回值
+message ScStat {
+}
+
+// heartbeat 函数的参数
+message ScHearBeat {
+    required int64 ts = 1;
+}
+// update_by_server 函数的参数
+message UpdateByServer {
+    required string cfg = 1;
+    optional int64  ts = 2;
+}
+
+// 定义ScClient接口
+service ScClient {
+    // 定义stop函数的参数与返回值，并定义器oneway属性
+    rpc stop (ScStop) returns (Null) {
+        option (oneway) = true;
+    };
+    // 定义reload函数的参数与返回值，并定义器oneway属性
+    rpc reload (ScReload) returns (Null) {
+        option (oneway) = false;
+    };
+    // 定义stat函数的参数与返回值，并定义器oneway属性
+    rpc stat(Null) returns (ScStat) {
+        option (oneway) = false;
+    };
+    // 定义heartbeat函数的参数与返回值，并定义器oneway属性
+    rpc heartbeat(ScHearBeat) returns (Null) {
+        option (oneway) = true;
+    };
+    // 定义update_by_server函数的参数与返回值，并定义器oneway属性
+    rpc update_by_server(UpdateByServer) returns (Null) {
+        option (oneway) = true;
+    };
+}

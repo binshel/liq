@@ -4,80 +4,98 @@
 
 #include <map>
 #include <list>
+#include <functional>
+
+#include "liq.h"
+#include "logger.h"
 
 
 namespace liq {
-
-#define STACK_SIZE  (32 * 1024)
-
-    class ThreadPool;
+    typedef std::function<void()> fun_spawn_cb;
 
     struct ThreadEvent {
-        int32_t type;
-        int32_t value;
+        const std::string *err;
+        void *data;
     };
 
-    class ThreadBase {
-        public:
-            typedef void (*fun_enter)(void*);
-            friend class ThreadPool;
-            ThreadBase() = delete;
-            ThreadBase(ThreadPool *belong);
+    class ThreadPool;
+    class Thread {
+        friend class ThreadPool;
+    private:
+        Thread();
+        void init();
 
-            void clear();
-            bool can_active(ThreadEvent *event);
+        inline int64_t get_id()
+        {
+            return this->id;
+        }
+        inline void set_id(int64_t id)
+        {
+            this->id = id;
+        }
 
-        private:
-            int64_t id;
-            fun_enter enter;
-            void *args;
-            ucontext_t ucp;
-            ThreadBase *parent;
-            uint8_t stack[STACK_SIZE];
-            std::list<ThreadEvent*> events;
-            bool    is_yield;
-            int32_t yield_type;
-            int32_t yield_value;
+        static void thread_enter(Thread *thread);
 
-        private:
-            static int64_t now_id;
+        int64_t id;
+        Thread *parent;
+        fun_spawn_cb enter;
+        
+        uint8_t stack[STACK_SIZE];
+        ucontext_t ucp;
+        int64_t yield_time;
+        Thread *yield_pre;
+        Thread *yield_next;
     };
 
 
     class ThreadPool {
         public:
-            enum EVENT {
-                EVENT_RPC           = 1,
-                EVENT_WRITE         = 2,
-                EVENT_WRITE_SYNC    = 3,
-                EVENT_READ_SYNC     = 4
-            };
-
-            friend class ThreadBase;
+            friend class Thread;
             ThreadPool();
-
-            int64_t spawn(ThreadBase::fun_enter enter, void* args);
+            int32_t ontick();
+            int64_t spawn(const fun_spawn_cb& enter);
             inline int64_t self() {
                 return this->running->id;
             };
 
-            ThreadEvent* yield(int32_t type = 0, int32_t value = 0);
-            int notify(int64_t id, ThreadEvent *event);
+            ThreadEvent& yield(uint32_t timeout = 30);
+            template <class T>
+            int notify(int64_t tid, T *data) {
+                auto it = this->threads.find(tid);
+                if (it != this->threads.end()) {
+                    auto thread = it->second;
+                    this->notify_event.err = NULL;
+                    this->notify_event.data = data;
+                    this->swap_to(thread);
+                    return 0;
+                } else {
+                    WARNF("notify thread not exist [%ld][0x%x]",
+                            tid, data);
+                    delete data;
+                    return -1;
+                }
+            }
 
         private:
+            inline int64_t alloc_id() {
+                return ++now_id;
+            }
             void free();
-            void swap_to(ThreadBase *to);
-            ThreadBase* get_free_thread();
+            void swap_to(Thread *to);
+            Thread* get_free_thread();
             void ensure_pool();
-            static void thread_enter(ThreadPool *pool, ThreadBase *thread);
 
-            ThreadBase **pool;
+            Thread **pool;
             int32_t pool_size;
-            int32_t thread_num;
             int32_t free_num;
-            ThreadBase *running;
-            ThreadBase *main_thread;
-            std::map<int64_t, ThreadBase*> threads;
-            ThreadEvent *notify_event;
+            int32_t thread_num;
+            std::map<int64_t, Thread*> threads;
+            Thread *main_thread;
+            Thread *running;
+            ThreadEvent notify_event;
+            int64_t tick_time;
+            Thread *yields[THREAD_TIMEOUT_QUEUE_LENTH];
+
+            static int64_t now_id;
     };
 }

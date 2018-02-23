@@ -1,8 +1,0 @@
-import "test_s.proto";
-
-package test;
-
-
-
-service SearchC {
-}

@@ -30,6 +30,7 @@ CommandLine::CommandLine()
 
 void CommandLine::init(int argc, char * const argv[])
 {
+    instance.name = argv[0];
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
             if (argv[i][1] == '-') {

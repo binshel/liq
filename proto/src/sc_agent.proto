@@ -1,0 +1,19 @@
+
+import public "base.proto";
+
+message CallScServer 
+{
+    required string method = 1;
+    required string params = 2;
+}
+
+
+service ScAgent {
+    rpc call_sc_server(CallScServer) returns (String) {
+        option (oneway) = false;
+        option (prepacker) = "object2string";
+    };
+    rpc call_sc_server_oneway(CallScServer) returns (Null) {
+        option (oneway) = true;
+    };
+}

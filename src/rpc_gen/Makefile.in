@@ -78,15 +78,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = crpc_gen$(EXEEXT)
+bin_PROGRAMS = pb2cpp$(EXEEXT) pbvalide$(EXEEXT)
 subdir = src/rpc_gen
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -95,13 +92,18 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_crpc_gen_OBJECTS = crpc_gen.$(OBJEXT)
-crpc_gen_OBJECTS = $(am_crpc_gen_OBJECTS)
-crpc_gen_LDADD = $(LDADD)
+am_pb2cpp_OBJECTS = pb2cpp.$(OBJEXT) parse.$(OBJEXT) \
+	gen_header.$(OBJEXT) gen_stub.$(OBJEXT) gen_skeleton.$(OBJEXT) \
+	gen_idl.$(OBJEXT)
+pb2cpp_OBJECTS = $(am_pb2cpp_OBJECTS)
+pb2cpp_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_pbvalide_OBJECTS = pbvalide.$(OBJEXT) parse.$(OBJEXT)
+pbvalide_OBJECTS = $(am_pbvalide_OBJECTS)
+pbvalide_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -136,8 +138,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(crpc_gen_SOURCES)
-DIST_SOURCES = $(crpc_gen_SOURCES)
+SOURCES = $(pb2cpp_SOURCES) $(pbvalide_SOURCES)
+DIST_SOURCES = $(pb2cpp_SOURCES) $(pbvalide_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -282,8 +284,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-crpc_gen_SOURCES = crpc_gen.cc
+AM_CXXFLAGS = --std=gnu++11
 AM_LDFLAGS = -lprotoc -lprotobuf
+pb2cpp_SOURCES = pb2cpp.cc\
+				parse.cc  \
+				gen_header.cc \
+				gen_stub.cc  \
+				gen_skeleton.cc  \
+				gen_idl.cc  
+
+pbvalide_SOURCES = pbvalide.cc\
+				parse.cc 
+
 all: all-am
 
 .SUFFIXES:
@@ -368,9 +380,13 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-crpc_gen$(EXEEXT): $(crpc_gen_OBJECTS) $(crpc_gen_DEPENDENCIES) $(EXTRA_crpc_gen_DEPENDENCIES) 
-	@rm -f crpc_gen$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(crpc_gen_OBJECTS) $(crpc_gen_LDADD) $(LIBS)
+pb2cpp$(EXEEXT): $(pb2cpp_OBJECTS) $(pb2cpp_DEPENDENCIES) $(EXTRA_pb2cpp_DEPENDENCIES) 
+	@rm -f pb2cpp$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(pb2cpp_OBJECTS) $(pb2cpp_LDADD) $(LIBS)
+
+pbvalide$(EXEEXT): $(pbvalide_OBJECTS) $(pbvalide_DEPENDENCIES) $(EXTRA_pbvalide_DEPENDENCIES) 
+	@rm -f pbvalide$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(pbvalide_OBJECTS) $(pbvalide_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -378,7 +394,13 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crpc_gen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen_header.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen_idl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen_skeleton.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen_stub.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pb2cpp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pbvalide.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -20,86 +20,96 @@
 #include <string>
 #include <fstream>
 
+#include <jsoncpp/json/value.h>
+
 #include "liq/liq.h"
 #include "liq/rpc.h"
 #include "liq/service.h"
 #include "liq/module.h"
 #include "liq/io.h"
+#include "liq/logger.h"
+#include "liq/timer.h"
+#include "liq/stacktrace_imp.h"
+
 
 
 namespace liq {
     
-    LiqState *liq = NULL;
-
-    int CommonService::onload(ArduinoJson::JsonObject &cfg) {
+    int CommonService::onload(Json::Value &cfg) {
         return 0;
     }
-    int CommonService::oninit(ArduinoJson::JsonObject &cfg, std::map<std::string, CommonService*> &deps) {
+    int CommonService::oninit(Json::Value &cfg, std::map<std::string, CommonService*> &deps) {
         return 0;
     }
     void CommonStub::set_rpc(RPC *rpc) {
         this->rpc = rpc;
     }
 
-    ITickCB::ITickCB()
-        : intick(false) {
+    Liq::Liq() :
+        logger(NULL),
+        io(NULL),
+        module(NULL),
+        thread_pool(NULL),
+        timer(NULL),
+        rpc(NULL),
+        service(NULL)
+    {
     }
-    void ITickCB::call(ITickCB *cb) {
-        cb->intick = true;
-        cb->ontick();
-        cb->intick = false;
-    }
-
-    LiqState::LiqState(const char *node_name, const char *cfgfile) {
-        liq =  this;
-        this->cfgfile = cfgfile;
-        ArduinoJson::DynamicJsonBuffer json_buff(5120);       
-        std::fstream fs_cfg;
-        fs_cfg.open(cfgfile, std::fstream::in | std::fstream::binary);
-
-        ArduinoJson::JsonObject &root = json_buff.parse(fs_cfg);
-        if (!root.success()) {
-            printf("json parse error\n");
-            exit(-1);
-        }
-
-        
-        this->rpc_manager = new RPCManager(node_name);
-        this->module_manager = new ModuleManager();
+    void Liq::init(const std::string &node_name)
+    {
+        _node_name = node_name;
+        this->set_time();
+        this->logger= new LoggerManager(node_name);
+        this->io= new IO();
+        this->module= new ModuleManager();
         this->thread_pool = new ThreadPool();
-        this->service_manager = new ServiceManager(root);
-        this->io_manager = new io::IOManager();
+        this->timer= new TimerManager();
+        this->rpc= new RPCManager(node_name);
+        this->service= new ServiceManager();
+
+        // 加载 pb 库
+        this->module->load("liq.pb.so");
     }
-    int LiqState::ontick() {
+    Liq::~Liq()
+    {
+        if (logger) delete logger;
+        if (io) delete io;
+        if (module) delete module;
+        if (thread_pool) delete thread_pool;
+        if (timer) delete timer;
+        if (rpc) delete rpc;
+        if (service) delete service;
+    }
+    void Liq::load_cfg(Json::Value &cfg)
+    {
+        this->service->load_cfg(cfg);
+    }
+
+    int Liq::ontick() {
         int count = 0;
+        this->set_time();
 
         // rpc handle
-        count += this->rpc_manager->ontick();
-
+        count += this->rpc->ontick();
         // io
-        count += this->io_manager->ontick();
-
+        count += this->io->ontick();
+        // thread_pool
+        count += this->thread_pool->ontick();
+        // timer
+        count += this->timer->ontick();
         // registed tick
         for (auto it_cb = tick_cbs.begin();
                 it_cb != tick_cbs.end(); 
-                ++it_cb) { 
-            ITickCB *cb = it_cb->second;
-            if (cb->intick) continue;
-            thread_pool->spawn((ThreadBase::fun_enter)ITickCB::call, cb);
+                ++it_cb) 
+        {
+            fun_tick_cb &cb = it_cb->second;
+            thread_pool->spawn(cb);
         }
+        this->logger->ontick();
         return count;
     }
-    void LiqState::regist_tick_cb(const std::string &name, ITickCB *cb) {
+    void Liq::regist_tick_cb(const std::string &name, const fun_tick_cb &cb) {
         this->tick_cbs[name] = cb;
     }
 
-
-    extern "C" {
-        LiqState* liq_init(const char *node_name, const char *cfgfile) {
-            if (!liq)  {
-                liq = new LiqState(node_name, cfgfile);
-            }
-            return liq;
-        }
-    }
 }

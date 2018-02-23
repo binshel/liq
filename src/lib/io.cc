@@ -1,151 +1,140 @@
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
-#include "liq/io.h"
+#include "config.h"
 #include "liq/liq.h"
+#include "liq/logger.h"
+#include "liq/io.h"
 
 
-namespace liq { namespace io {
+namespace liq { 
 
-    Event::Event(int32_t type, void *buff, int32_t len, int32_t off)
-        :buff(buff), len(len), off(off)
+    /*
+    void * malloc(int size)
     {
-        type = type;
-        master = liq->thread_pool->self();
+        return yesmalloc(size);
     }
-    Event::~Event() {
-        switch(type) {
-        case ThreadPool::EVENT_WRITE_SYNC:
-        case ThreadPool::EVENT_READ_SYNC:
-            break;
-        default:
-            free(buff);
-        }
+    void free(void * ptr)
+    {
+        return yesfree(ptr);
     }
+    */
 
-    File::File() {
-        fd = -1;
-    }
-    File::~File() {
-        this->close();
-    }
-
-    int32_t File::open(const char *path) {
-        if (fd >= 0) return -1;
-        fd = ::open(path, O_RDWR | O_NONBLOCK);
-        if (fd < 0) {
-            liq->io_manager->regist_io(this);
-            return fd;
-        } else {
-            return -1;
-        }
-    }
-    void File::close() {
-        liq->io_manager->unregist_io(this);
-        for (; !write_queue.empty(); write_queue.pop()) {
-            Event *event = write_queue.front();
-            if (event->type == ThreadPool::EVENT_WRITE_SYNC) {
-                event->value = fd;
-                event->off = -1;
-                liq->thread_pool->notify(event->master, event);
-            } else {
-                delete event;
-            }
-        }
-        for (; !read_queue.empty(); read_queue.pop()) {
-            Event *event = read_queue.front();
-            if (event->type == ThreadPool::EVENT_READ_SYNC) {
-                event->value = fd;
-                event->off = -1;
-                liq->thread_pool->notify(event->master, event);
-            } else {
-                delete event;
-            }
-        }
-        ::close(fd);
-    }
-
-    int32_t File::write_buff(ThreadPool::EVENT type, const void *data, int32_t len) {
-        int32_t off = 0;
-        if (write_queue.empty()) {
-            int32_t count = ::write(fd, data, len);
-            if (count >= len || count < 0) return count;
-            off = count;
-        }
-        auto buff = new Event(type, (void*)data, len, off);
-        write_queue.push(buff);
-        return off;
-    }
-
-    int32_t File::write(const void *data, int32_t len) {
-        return write_buff(ThreadPool::EVENT_WRITE, data, len);
-    }
-
-    int32_t File::write_sync(const void *data, int32_t len) {
-        auto count = write_buff(ThreadPool::EVENT_WRITE_SYNC, data, len);
-        if (count >= len || count < 0) return count;
-        Event *buff = (Event*)liq->thread_pool->yield(ThreadPool::EVENT_WRITE_SYNC, fd);
-        count = buff->off;
-        delete buff;
-        return count;
-    }
-
-    int32_t File::read_buff(ThreadPool::EVENT type, void *data, int32_t len) {
-        int32_t off = 0;
-        if (read_queue.empty()) {
-            int32_t count = ::read(fd, data, len);
-            if (count >= len || count < 0) return count;
-            off = count;
-        }
-        auto buff = new Event(type, data, len, off);
-        read_queue.push(buff);
-        return off;
-    }
-
-    int32_t File::read(void *data, int32_t len) {
-        auto count = read_buff(ThreadPool::EVENT_READ_SYNC, data, len);
-        if (count >= len || count < 0) return count;
-        Event *buff = (Event*)liq->thread_pool->yield(ThreadPool::EVENT_READ_SYNC, fd);
-        count = buff->off;
-        delete buff;
-        return count;
-    }
-
-    int32_t File::on_in() {
-    }
-    int32_t File::on_out() {
-    }
-    int32_t File::on_err() {
-    }
-
-
-    IOManager::IOManager()  {
+ 
+    IO::IO() : registed()
+    {
         epfd = epoll_create1(0);
     }
 
-    int IOManager::regist_io(IIO *io) {
+    int IO::regist_fd(int fd, const fun_fd_cb &on_data)
+    {
+        if (registed.find(fd) != registed.end()) {
+            return LIQ_ERR_IO_REGISTED;
+        }
+        int ret = IO::set_flags(fd, O_NONBLOCK);
+        if (ret != LIQ_SUCCESS) {
+            return ret;
+        }
+
         struct epoll_event ev;
-        ev.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLET;
-        ev.data.ptr = io;
-        return epoll_ctl(epfd, EPOLL_CTL_ADD, io->fd, &ev);
+        IOArgs *args = new IOArgs(on_data);
+        ev.events = EPOLLIN | EPOLLHUP | EPOLLRDHUP| EPOLLERR | EPOLLET;
+        ev.data.ptr = args;
+        ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev);
+        if (ret != 0) {
+            ERRORF("epoll error %d:%d [%s]\n", epfd, fd, strerror(errno));
+            delete args;
+            return LIQ_ERR_IO_CANNT_REGIST;
+        } 
+        registed[fd] = args;
+        return LIQ_SUCCESS;
     }
 
-    int IOManager::unregist_io(IIO *io) {
-        return epoll_ctl(epfd, EPOLL_CTL_DEL, io->fd, NULL);
+    int IO::unregist_fd(int fd)
+    {
+        auto it = registed.find(fd);
+        if (it == registed.end()) {
+            return LIQ_ERR_IO_UNREGISTED;
+        }
+        delete it->second;
+        registed.erase(it);
+        return epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+    }
+    int IO::update_fd(int fd, const fun_fd_cb &on_data)
+    {
+        auto it = registed.find(fd);
+        if (it == registed.end()) {
+            return LIQ_ERR_IO_UNREGISTED;
+        }
+        it->second->on_data = on_data;
+        return LIQ_SUCCESS;
     }
 
-    int32_t IOManager::ontick() {
-        int count = epoll_wait(epfd, events, EPOLL_SIZE, 10);
+    int32_t IO::ontick() {
+        int count = epoll_wait(epfd, events, EPOLL_SIZE, 1);
+        if (count < 0) return 0;
         for (int i = 0; i < count; ++i) {
-            IIO *io = (typeof(io))(events[i].data.ptr);
-            if (events[i].events & EPOLLIN) io->on_in();
-            if (events[i].events & EPOLLOUT) io->on_out();
-            if (events[i].events & EPOLLERR) io->on_err();
+            struct epoll_event &ev = events[i];
+            IOArgs *args = static_cast<IOArgs*>(ev.data.ptr);
+            DEBUGF("epoll events 0x%x", ev.events);
+            Liq::instance().thread_pool->spawn([&ev, args]() {
+                        args->on_data(ev.events);
+                    });
         }
         return count;
     }
+    int IO::set_flags(int fd, int flags)
+    {
+        int old = fcntl(fd, F_GETFL, 0);
+        if (old < 0) {
+            return LIQ_ERR_FCNTL_ERROR;
+        }
+        int cur = old | flags;
+        cur = fcntl(fd, F_SETFL, cur);
+        if (cur < 0) {
+            return LIQ_ERR_FCNTL_ERROR;
+        }
+        return LIQ_SUCCESS;
+    }
+    int IO::tcp_listen(int port, int *lfd, const std::string *ip)
+    {
+        int optval = 1;
+        struct sockaddr_in addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        addr.sin_port = htons(port);
 
-}}
+        int fd = socket(AF_INET, SOCK_STREAM, PF_UNSPEC);
+        if (fd < 0) {
+            return LIQ_ERR_SOCK_NEW;
+        }
+
+        int ret = LIQ_SUCCESS;
+        ret = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+        if (ret != 0) {
+            ret = LIQ_ERR_SOCK_OPT;
+            goto out;
+        }
+        ret = bind(fd, (struct sockaddr *)(&addr), sizeof(addr));
+        if (ret != 0) {
+            ret = LIQ_ERR_SOCK_BIND;
+            goto out;
+        }
+        ret = listen(fd, LISTEN_QUEUE);
+        if (ret != 0) {
+            ret = LIQ_ERR_SOCK_LISTEN;
+            goto out;
+        }
+        *lfd = fd;
+        return LIQ_SUCCESS;
+out:
+        close(fd);
+        return ret;
+        
+    }
+}
 
 
 
