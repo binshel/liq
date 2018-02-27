@@ -1,3 +1,9 @@
+/**
+ * @file parse.cc
+ * @author rison
+ * @brief 解析 proto 文件
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -16,6 +22,32 @@ using namespace google::protobuf::compiler;
 
 namespace rpc_gen
 {
+    /**
+     * @brief 解析 proto 出错时，描述详细错误信息
+     */
+    class ParseError : public MultiFileErrorCollector
+    {
+    public:
+        ParseError()
+        {
+            has_error = false;
+        }
+        
+        /**
+         * @brief 实现 MultiFileErrorCollector 添加错误信息方法
+         * @param filename 错误发生的文件名
+         * @param line 错误发生的行号
+         * @param column 错误发生的列号
+         * @param message 错误描述
+         */
+        virtual void AddError(const string& filename, int line, int column, const string& message)
+        {
+            printf("%s:%d column(%d) %s\n", filename.c_str(), line, column, message.c_str());
+            has_error = true;
+        }
+        bool has_error;
+    };
+
     bool pb_method_isoneway(const google::protobuf::MethodDescriptor *method)
     {
         const google::protobuf::MethodOptions &opts = method->options();
@@ -41,11 +73,30 @@ namespace rpc_gen
         return empty;
     }
 
+    const FileDescriptor* parse_pb(std::list<char*> &includes, const char *inputfile)
+    {
+        ParseError error;
+        DiskSourceTree tree;
+        for (auto &include : includes) {
+            tree.MapPath("", include);
+        }
+ 
+        Importer *importer = new Importer(&tree, &error);
+        const FileDescriptor * file = importer->Import(inputfile);
+        if (error.has_error) {
+            exit(-1);
+        }
+        return file;
+    }
 
+    /**
+     * @details 除了基础类型，复杂类型和 repeated 类型都是指针，
+     * 记录这些信息方便对类型的输出
+     */
     FieldType::FieldType(const google::protobuf::FieldDescriptor *field)
         : is_repeated(false),  is_point(false) 
     {
-        const char *base_type_name = "";
+        const char *base_type_name = "";    // 在 c++ 中对应的类型
         switch(field->cpp_type()) {
             case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
                 base_type_name = "int32_t"; break;
@@ -95,34 +146,6 @@ namespace rpc_gen
         this->name = string_stream.str();
     }
 
-    class ParseError : public MultiFileErrorCollector
-    {
-    public:
-        ParseError()
-        {
-            has_error = false;
-        }
-        virtual void AddError(const string& filename, int line, int column, const string& message)
-        {
-            printf("%s:%d column(%d) %s\n", filename.c_str(), line, column, message.c_str());
-            has_error = true;
-        }
-        bool has_error;
-    };
-    const FileDescriptor* parse_pb(std::list<char*> &includes, const char *inputfile)
-    {
-        ParseError error;
-        DiskSourceTree tree;
-        for (auto &include : includes) {
-            tree.MapPath("", include);
-        }
- 
-        Importer *importer = new Importer(&tree, &error);
-        const FileDescriptor * file = importer->Import(inputfile);
-        if (error.has_error) {
-            exit(-1);
-        }
-        return file;
-    }
+
 }
 

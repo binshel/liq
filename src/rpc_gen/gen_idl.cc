@@ -1,3 +1,9 @@
+/**
+ * @file gen_idl.h
+ * @brief 生成服务的 idl 文件
+ */
+
+
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -13,6 +19,11 @@
 
 namespace rpc_gen
 {
+    /**
+     * @brief 生成 idl 文件
+     * @param arg 程序的命令行参数
+     * @param file proto 文件的解析结果
+     */
     void gen_idl(const Arguments &arg, const FileDescriptor *file)
     {
         const char *inputfile = arg.inputfile;

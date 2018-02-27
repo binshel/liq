@@ -1,3 +1,8 @@
+/**
+ * @file pb2cpp.cc
+ * @brief 根据 proto 文件生成 c++ 文件和 idl 文件
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -8,22 +13,33 @@
 
 #include <google/protobuf/descriptor.h>
 
+#include "parse.h"
 #include "pb2cpp.h"
 
 
 static rpc_gen::Arguments arg;
+
+/**
+ * @brief 打印帮组信息并退出程序
+ */
 static void help()
 {
     printf("Usage: %s options\n", arg.name);
-    printf("\t-I include proto diretory\n");
-    printf("\t-o output diretory\n");
-    printf("\t-i idl output diretory\n");
+    printf("\t-I include proto diretory\n");    // proto 文件的查找路径
+    printf("\t-o output diretory\n");           // 输出文件的存放目录
+    printf("\t-i idl output diretory\n");       // 单独指定 idl 文件的输出目录
+    // 单独指定 c++ 文件的输出目录
     printf("\t-r header, stub and skeleton output diretory\n");
-    printf("\t-p package path\n");
-    printf("\t-f proto file\n");
+    printf("\t-p package path\n");  // 用于idl文件只是目录前缀
+    printf("\t-f proto file\n");    // proto 输入文件
     exit (-1);
 }
 
+/**
+ * @brief 把一个路径转换为绝对路径
+ * @param path 被转换的路径
+ * @return 绝对路径
+ */
 static char *get_path(const char *path)
 {
     char *ab_path = realpath(path, NULL);
@@ -34,6 +50,11 @@ static char *get_path(const char *path)
     return ab_path;
 }
 
+/**
+ * @brief 解析命令行参数
+ * @param argc 参数个数
+ * @param argv 参数列表
+ */
 static void parse_arg(int argc, char *argv[])
 {
     arg.name = argv[0];
@@ -107,11 +128,15 @@ int main(int argc, char *argv[])
 {
     parse_arg(argc, argv);
 
-
+    // 解析输入文件
     const FileDescriptor* file = rpc_gen::parse_pb(arg.includes, arg.inputfile);
+    // 生成头文件
     rpc_gen::gen_header(arg.inputfile, arg.rpcdir, file);
+    // 生成 stub 文件
     rpc_gen::gen_stub(arg.inputfile, arg.rpcdir, file);
+    // 生成 skeleton 文件
     rpc_gen::gen_skeleton(arg.inputfile, arg.rpcdir, file);
+    // 生成 idl 文件
     rpc_gen::gen_idl(arg, file);
     return 0;
 }

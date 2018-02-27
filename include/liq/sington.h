@@ -1,3 +1,8 @@
+/**
+ * @file sington.h
+ * @brief 单例基类
+ */
+
 #pragma once
 
 

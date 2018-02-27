@@ -18,6 +18,7 @@ namespace sol {
         // onload 函数在实例被加载是调用
         int onload(Json::Value &cfg) {
             // nothing todo
+            return 0;
         }
         // oninit 函数初始化实例状态
         int oninit(

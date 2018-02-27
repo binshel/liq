@@ -18,3 +18,5 @@ Makefile.in
 *.skeleton.*
 *.stub.*
 config.log
+doc
+*.cache

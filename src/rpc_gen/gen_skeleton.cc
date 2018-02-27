@@ -1,3 +1,9 @@
+/**
+ * @file gen_skeleton.h
+ * @brief 生成服务的 skeleton 文件
+ */
+
+
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -12,6 +18,12 @@
 
 namespace rpc_gen
 {
+    /**
+     * @brief 生成 skeleton 文件
+     * @param inputfile proto 文件路径
+     * @param outputdir 输出文件存放的目录
+     * @param file proto 文件的解析结果
+     */
     void gen_skeleton(const char *inputfile, const char *outputdir, const FileDescriptor *file) 
     {
         char name_buff[512] = "";

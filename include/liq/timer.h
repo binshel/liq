@@ -1,3 +1,8 @@
+/**
+ * @file timer.h
+ * @brief 提供定时器功能
+ */
+
 #include <queue>
 #include <map>
 #include <vector>

@@ -1,3 +1,9 @@
+/**
+ * @file stacktrace_imp.h
+ * @brief 答应进程堆栈的实现，只需一个源文件包含此头文件
+ */
+
+
 #pragma once
 
 #include "stacktrace.h"

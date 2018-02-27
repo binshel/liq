@@ -1,3 +1,8 @@
+/**
+ * @file logger.h
+ * @brief 打印程序运行日志
+ */
+
 #pragma once
 #include <stdio.h>
 #include <stdarg.h>
@@ -5,10 +10,28 @@
 
 
 namespace liq {
-#define LOG_BUF_LEN 10240
+
+    ///< @brief 文件 IO 的 buff 大小
+#   define LOG_BUF_LEN 10240
+
+    /**
+     * 日志功能接口
+     */
     class ILogger {
     public:
+        /**
+         * @brief 刷新缓存的日志
+         */
+        virtual void flush() = 0;
+        /**
+         * @brief 格式化打印日志
+         * @param fmt 输出格式
+         * @param ... 格式参数
+         */
         virtual ILogger& format(const char *fmt, ...) = 0;
+        /**
+         * @brief 流方式打印日志
+         */
         virtual ILogger& operator<< (bool val ) = 0;
         virtual ILogger& operator<< (short val ) = 0;
         virtual ILogger& operator<< (unsigned short val ) = 0;
@@ -23,8 +46,13 @@ namespace liq {
         virtual ILogger& operator<< (const std::string& val) = 0;
         virtual ILogger& operator<< (const void* val) = 0;
     };
+
+    /**
+     * ILogger 的一个实现：忽略日志
+     */
     class LoggerNone: public ILogger {
     public:
+        virtual inline void flush() {}
         virtual inline ILogger& format(const char *fmt, ...) {return *this;}
         virtual inline ILogger& operator<< (bool val ) {return *this;}
         virtual inline ILogger& operator<< (short val ) {return *this;}
@@ -40,9 +68,19 @@ namespace liq {
         virtual inline ILogger& operator<< (const std::string& val) {return *this;}
         virtual inline ILogger& operator<< (const void* val ) {return *this;}
     };
+
+    /**
+     * ILogger 的一个实现：打印日志到文件
+     */
     class LoggerFile: public ILogger {
     public:
+        /**
+         * @brief 初始化日志系统
+         * @param node_name 节点名，用于确定输出文件的文件名
+         * @param buf_size 日志文件的 buff 大小
+         */
         int init(const std::string &node_name, size_t buf_size = LOG_BUF_LEN);
+
         inline void flush()
         {
             fflush(this->file);
@@ -125,9 +163,13 @@ namespace liq {
         char filepath[256];
     };
 
+    /**
+     * @brief 管理日志服务，根据日志级别给出不同的日志实现
+     */
     class LoggerManager 
     {
     public:
+        /// @brief 定义日志级别
         enum LogLevel
         {
             LOG_DEBUG = 0,
@@ -140,12 +182,13 @@ namespace liq {
         ILogger &get(LogLevel level);
         void ontick();
     private:
-        LogLevel level;
-        LoggerNone *none;
-        LoggerFile *file;
+        LogLevel level;     ///< 日志级别
+        LoggerNone *none;   ///< 不记录日志
+        LoggerFile *file;   ///< 用文件记录日志
     };
 
     
+/// @brief 行结束符
 #define EOL "\n"
 
 #define LOGGER_FIX(level, prefix, suffix)  \
@@ -157,17 +200,25 @@ namespace liq {
             liq::Liq::instance().tm.tm_hour, liq::Liq::instance().tm.tm_min, liq::Liq::instance().tm.tm_sec,                    \
             __FILE__, __LINE__) 
 
+    /// @brief 流形式初始 debug 级别日志
 #define DEBUG   LOGGER_FIX(liq::LoggerManager::LOG_DEBUG, "", "")
+    /// @brief 流形式初始 info 级别日志
 #define INFO    LOGGER_FIX(liq::LoggerManager::LOG_INFO, "", "")
+    /// @brief 流形式初始 warn 级别日志
 #define WARN    LOGGER_FIX(liq::LoggerManager::LOG_WARN, "", "")
+    /// @brief 流形式初始 error 级别日志
 #define ERROR   LOGGER_FIX(liq::LoggerManager::LOG_ERROR, "", "")
 
+    /// @brief 格式化输出 debug 级别日志
 #define DEBUGF(fmt, args...) \
     LOGGER_FIX(liq::LoggerManager::LOG_DEBUG, "", " ").format(fmt "\n", ##args)
+    /// @brief 格式化输出 info 级别日志
 #define INFOF(fmt, args...) \
     LOGGER_FIX(liq::LoggerManager::LOG_INFO, "", " ").format(fmt "\n", ##args)
+    /// @brief 格式化输出 warn 级别日志
 #define WARNF(fmt, args...) \
     LOGGER_FIX(liq::LoggerManager::LOG_WARN, "", " ").format(fmt "\n", ##args)
+    /// @brief 格式化输出 error 级别日志
 #define ERRORF(fmt, args...) \
     LOGGER_FIX(liq::LoggerManager::LOG_ERROR, "", " ").format(fmt "\n", ##args)
     
